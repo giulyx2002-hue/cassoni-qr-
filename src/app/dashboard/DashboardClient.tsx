@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
-import type { Movimento, UltimaPosizione } from "@/lib/types";
+import type { Cassone, Movimento, TipoOperazione, UltimaPosizione } from "@/lib/types";
+import { TIPI_OPERAZIONE } from "@/lib/types";
 
 const Mappa = dynamic(() => import("./Mappa").then((m) => m.Mappa), {
   ssr: false,
@@ -14,12 +15,19 @@ const Mappa = dynamic(() => import("./Mappa").then((m) => m.Mappa), {
   ),
 });
 
+function labelOperazione(tipo: TipoOperazione) {
+  return TIPI_OPERAZIONE.find((t) => t.value === tipo)?.label ?? tipo;
+}
+
 export function DashboardClient({
   posizioniIniziali,
+  cassoniIniziali,
 }: {
   posizioniIniziali: UltimaPosizione[];
+  cassoniIniziali: Cassone[];
 }) {
   const [posizioni, setPosizioni] = useState(posizioniIniziali);
+  const [tuttiCassoni, setTuttiCassoni] = useState(cassoniIniziali);
   const [filtro, setFiltro] = useState("");
   const [selezionato, setSelezionato] = useState<string | null>(null);
   const [storico, setStorico] = useState<Movimento[]>([]);
@@ -27,7 +35,7 @@ export function DashboardClient({
   useEffect(() => {
     const supabase = createClient();
 
-    async function ricarica() {
+    async function ricaricaPosizioni() {
       const { data } = await supabase
         .from("ultima_posizione")
         .select("*")
@@ -40,7 +48,7 @@ export function DashboardClient({
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "movimenti" },
-        () => ricarica()
+        () => ricaricaPosizioni()
       )
       .subscribe();
 
@@ -60,17 +68,83 @@ export function DashboardClient({
       .then(({ data }) => setStorico((data as Movimento[]) ?? []));
   }, [selezionato]);
 
-  const posizioniFiltrate = useMemo(() => {
-    if (!filtro.trim()) return posizioni;
-    const q = filtro.toLowerCase();
-    return posizioni.filter(
-      (p) =>
-        p.codice.toLowerCase().includes(q) ||
-        (p.cliente ?? "").toLowerCase().includes(q)
-    );
-  }, [posizioni, filtro]);
+  const posizionePerCassone = useMemo(() => {
+    const mappa = new Map<string, UltimaPosizione>();
+    posizioni.forEach((p) => mappa.set(p.cassone_id, p));
+    return mappa;
+  }, [posizioni]);
 
-  const cassoneSelezionato = posizioni.find((p) => p.cassone_id === selezionato);
+  const cassoniFiltrati = useMemo(() => {
+    if (!filtro.trim()) return tuttiCassoni;
+    const q = filtro.toLowerCase();
+    return tuttiCassoni.filter((c) => {
+      const pos = posizionePerCassone.get(c.id);
+      return (
+        c.codice.toLowerCase().includes(q) ||
+        (pos?.cliente ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [tuttiCassoni, posizionePerCassone, filtro]);
+
+  const posizioniFiltrate = useMemo(
+    () => posizioni.filter((p) => cassoniFiltrati.some((c) => c.id === p.cassone_id)),
+    [posizioni, cassoniFiltrati]
+  );
+
+  const cassoneSelezionato = tuttiCassoni.find((c) => c.id === selezionato);
+
+  async function eliminaCassone(cassone: Cassone) {
+    if (!confirm(`Eliminare definitivamente il cassone ${cassone.codice} e tutto il suo storico?`)) {
+      return;
+    }
+    const supabase = createClient();
+    const { error } = await supabase.from("cassoni").delete().eq("id", cassone.id);
+    if (error) {
+      alert(`Errore nell'eliminazione: ${error.message}`);
+      return;
+    }
+    setTuttiCassoni((prev) => prev.filter((c) => c.id !== cassone.id));
+    setPosizioni((prev) => prev.filter((p) => p.cassone_id !== cassone.id));
+    setSelezionato(null);
+  }
+
+  async function aggiornaCassone(cassone: Cassone, dimensioni: string, note: string) {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("cassoni")
+      .update({ dimensioni: dimensioni || null, note: note || null })
+      .eq("id", cassone.id);
+    if (error) {
+      alert(`Errore nel salvataggio: ${error.message}`);
+      return false;
+    }
+    setTuttiCassoni((prev) =>
+      prev.map((c) => (c.id === cassone.id ? { ...c, dimensioni: dimensioni || null, note: note || null } : c))
+    );
+    return true;
+  }
+
+  async function eliminaMovimento(movimento: Movimento) {
+    if (!confirm("Eliminare questo movimento?")) return;
+    const supabase = createClient();
+    const { error } = await supabase.from("movimenti").delete().eq("id", movimento.id);
+    if (error) {
+      alert(`Errore nell'eliminazione: ${error.message}`);
+      return;
+    }
+    setStorico((prev) => prev.filter((m) => m.id !== movimento.id));
+  }
+
+  async function aggiornaMovimento(id: string, campi: Partial<Movimento>) {
+    const supabase = createClient();
+    const { error } = await supabase.from("movimenti").update(campi).eq("id", id);
+    if (error) {
+      alert(`Errore nel salvataggio: ${error.message}`);
+      return false;
+    }
+    setStorico((prev) => prev.map((m) => (m.id === id ? { ...m, ...campi } : m)));
+    return true;
+  }
 
   return (
     <div className="flex flex-1 flex-col md:flex-row">
@@ -97,24 +171,23 @@ export function DashboardClient({
             >
               ← Torna all&apos;elenco
             </button>
-            <h2 className="font-semibold text-gray-900">
-              {cassoneSelezionato.codice}
-            </h2>
-            <p className="text-sm text-gray-500">Storico movimenti</p>
-            <ul className="mt-3 space-y-3">
+
+            <GestioneCassone
+              key={cassoneSelezionato.id}
+              cassone={cassoneSelezionato}
+              onSalva={aggiornaCassone}
+              onElimina={() => eliminaCassone(cassoneSelezionato)}
+            />
+
+            <p className="mb-2 mt-5 text-sm font-medium text-gray-700">Storico movimenti</p>
+            <ul className="space-y-3">
               {storico.map((m) => (
-                <li key={m.id} className="rounded-lg border border-gray-200 p-3 text-sm">
-                  <p className="text-gray-500">
-                    {new Date(m.created_at).toLocaleString("it-IT")}
-                  </p>
-                  {m.cliente && <p>Cliente: {m.cliente}</p>}
-                  {m.quantita != null && <p>Quantità: {m.quantita}</p>}
-                  {m.dimensioni && <p>Dimensioni: {m.dimensioni}</p>}
-                  {m.note && <p>Note: {m.note}</p>}
-                  <p className="text-gray-400">
-                    {m.lat.toFixed(5)}, {m.lng.toFixed(5)}
-                  </p>
-                </li>
+                <MovimentoItem
+                  key={m.id}
+                  movimento={m}
+                  onSalva={(campi) => aggiornaMovimento(m.id, campi)}
+                  onElimina={() => eliminaMovimento(m)}
+                />
               ))}
               {storico.length === 0 && (
                 <p className="text-sm text-gray-400">Nessun movimento.</p>
@@ -123,30 +196,251 @@ export function DashboardClient({
           </div>
         ) : (
           <ul className="flex-1 divide-y divide-gray-200 overflow-y-auto">
-            {posizioniFiltrate.map((p) => (
-              <li key={p.cassone_id}>
-                <button
-                  onClick={() => setSelezionato(p.cassone_id)}
-                  className="block w-full px-4 py-3 text-left hover:bg-gray-50"
-                >
-                  <p className="font-medium text-gray-900">{p.codice}</p>
-                  <p className="text-sm text-gray-500">
-                    {p.cliente || "Nessun cliente"}
-                    {p.quantita != null ? ` · qtà ${p.quantita}` : ""}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(p.ultimo_movimento).toLocaleString("it-IT")} ·{" "}
-                    {p.ultimo_dipendente}
-                  </p>
-                </button>
-              </li>
-            ))}
-            {posizioniFiltrate.length === 0 && (
+            {cassoniFiltrati.map((c) => {
+              const pos = posizionePerCassone.get(c.id);
+              return (
+                <li key={c.id}>
+                  <button
+                    onClick={() => setSelezionato(c.id)}
+                    className="block w-full px-4 py-3 text-left hover:bg-gray-50"
+                  >
+                    <p className="font-medium text-gray-900">{c.codice}</p>
+                    {pos ? (
+                      <>
+                        <p className="text-sm text-gray-500">
+                          {pos.cliente || "Nessun cliente"} · {labelOperazione(pos.tipo_operazione)}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {new Date(pos.ultimo_movimento).toLocaleString("it-IT")} ·{" "}
+                          {pos.ultimo_dipendente}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-400">Nessun movimento registrato</p>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+            {cassoniFiltrati.length === 0 && (
               <p className="p-4 text-sm text-gray-400">Nessun cassone trovato.</p>
             )}
           </ul>
         )}
       </div>
     </div>
+  );
+}
+
+function GestioneCassone({
+  cassone,
+  onSalva,
+  onElimina,
+}: {
+  cassone: Cassone;
+  onSalva: (cassone: Cassone, dimensioni: string, note: string) => Promise<boolean>;
+  onElimina: () => void;
+}) {
+  const [modifica, setModifica] = useState(false);
+  const [dimensioni, setDimensioni] = useState(cassone.dimensioni ?? "");
+  const [note, setNote] = useState(cassone.note ?? "");
+  const [salvataggio, setSalvataggio] = useState(false);
+
+  async function salva() {
+    setSalvataggio(true);
+    const ok = await onSalva(cassone, dimensioni, note);
+    setSalvataggio(false);
+    if (ok) setModifica(false);
+  }
+
+  return (
+    <div className="rounded-lg border border-gray-200 p-3">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-gray-900">{cassone.codice}</h2>
+        {!modifica && (
+          <div className="flex gap-2">
+            <button onClick={() => setModifica(true)} className="text-sm text-gray-500 hover:text-gray-900">
+              Modifica
+            </button>
+            <button onClick={onElimina} className="text-sm text-red-600 hover:text-red-800">
+              Elimina
+            </button>
+          </div>
+        )}
+      </div>
+
+      {modifica ? (
+        <div className="mt-2 space-y-2">
+          <input
+            type="text"
+            placeholder="Dimensioni"
+            value={dimensioni}
+            onChange={(e) => setDimensioni(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+          />
+          <textarea
+            placeholder="Note"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={2}
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={salva}
+              disabled={salvataggio}
+              className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+            >
+              {salvataggio ? "Salvataggio..." : "Salva"}
+            </button>
+            <button
+              onClick={() => setModifica(false)}
+              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700"
+            >
+              Annulla
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-1 text-sm text-gray-500">
+          {cassone.dimensioni && <p>{cassone.dimensioni}</p>}
+          {cassone.note && <p>{cassone.note}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MovimentoItem({
+  movimento,
+  onSalva,
+  onElimina,
+}: {
+  movimento: Movimento;
+  onSalva: (campi: Partial<Movimento>) => Promise<boolean>;
+  onElimina: () => void;
+}) {
+  const [modifica, setModifica] = useState(false);
+  const [cliente, setCliente] = useState(movimento.cliente ?? "");
+  const [targa, setTarga] = useState(movimento.targa);
+  const [nomeAutista, setNomeAutista] = useState(movimento.nome_autista);
+  const [tipoOperazione, setTipoOperazione] = useState<TipoOperazione>(movimento.tipo_operazione);
+  const [dimensioni, setDimensioni] = useState(movimento.dimensioni ?? "");
+  const [note, setNote] = useState(movimento.note ?? "");
+  const [salvataggio, setSalvataggio] = useState(false);
+
+  async function salva() {
+    setSalvataggio(true);
+    const ok = await onSalva({
+      cliente: cliente || null,
+      targa,
+      nome_autista: nomeAutista,
+      tipo_operazione: tipoOperazione,
+      dimensioni: dimensioni || null,
+      note: note || null,
+    });
+    setSalvataggio(false);
+    if (ok) setModifica(false);
+  }
+
+  if (modifica) {
+    return (
+      <li className="rounded-lg border border-gray-200 p-3 text-sm">
+        <div className="space-y-2">
+          <input
+            value={cliente}
+            onChange={(e) => setCliente(e.target.value)}
+            placeholder="Cliente"
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+          />
+          <input
+            value={targa}
+            onChange={(e) => setTarga(e.target.value)}
+            placeholder="Targa"
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+          />
+          <input
+            value={nomeAutista}
+            onChange={(e) => setNomeAutista(e.target.value)}
+            placeholder="Nome autista"
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+          />
+          <select
+            value={tipoOperazione}
+            onChange={(e) => setTipoOperazione(e.target.value as TipoOperazione)}
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+          >
+            {TIPI_OPERAZIONE.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+          <input
+            value={dimensioni}
+            onChange={(e) => setDimensioni(e.target.value)}
+            placeholder="Dimensioni"
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+          />
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Note"
+            rows={2}
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={salva}
+              disabled={salvataggio}
+              className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+            >
+              {salvataggio ? "Salvataggio..." : "Salva"}
+            </button>
+            <button
+              onClick={() => setModifica(false)}
+              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700"
+            >
+              Annulla
+            </button>
+          </div>
+        </div>
+      </li>
+    );
+  }
+
+  return (
+    <li className="rounded-lg border border-gray-200 p-3 text-sm">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-gray-500">{new Date(movimento.created_at).toLocaleString("it-IT")}</p>
+        <div className="flex shrink-0 gap-2">
+          <button onClick={() => setModifica(true)} className="text-gray-500 hover:text-gray-900">
+            Modifica
+          </button>
+          <button onClick={onElimina} className="text-red-600 hover:text-red-800">
+            Elimina
+          </button>
+        </div>
+      </div>
+      <p className="font-medium">{labelOperazione(movimento.tipo_operazione)}</p>
+      {movimento.cliente && <p>Cliente: {movimento.cliente}</p>}
+      <p>Targa: {movimento.targa}</p>
+      <p>Autista: {movimento.nome_autista}</p>
+      {movimento.dimensioni && <p>Dimensioni: {movimento.dimensioni}</p>}
+      {movimento.note && <p>Note: {movimento.note}</p>}
+      <p className="text-gray-400">
+        {movimento.lat.toFixed(5)}, {movimento.lng.toFixed(5)}
+      </p>
+      {movimento.foto_urls.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {movimento.foto_urls.map((url) => (
+            <a key={url} href={url} target="_blank" rel="noreferrer">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={url} alt="Stato cassone" className="h-16 w-16 rounded-lg object-cover" />
+            </a>
+          ))}
+        </div>
+      )}
+    </li>
   );
 }

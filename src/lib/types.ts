@@ -1,5 +1,13 @@
 export type Ruolo = "dipendente" | "admin";
 
+export type TipoOperazione = "prelievo" | "consegna" | "spostamento";
+
+export const TIPI_OPERAZIONE: { value: TipoOperazione; label: string }[] = [
+  { value: "prelievo", label: "Prelievo" },
+  { value: "consegna", label: "Consegna" },
+  { value: "spostamento", label: "Spostamento" },
+];
+
 export interface Profile {
   id: string;
   nome: string;
@@ -21,9 +29,12 @@ export interface Movimento {
   cassone_id: string;
   dipendente_id: string;
   cliente: string | null;
-  quantita: number | null;
+  targa: string;
+  nome_autista: string;
+  tipo_operazione: TipoOperazione;
   dimensioni: string | null;
   note: string | null;
+  foto_urls: string[];
   lat: number;
   lng: number;
   accuratezza_metri: number | null;
@@ -33,7 +44,9 @@ export interface Movimento {
 export interface UltimaPosizione {
   cassone_id: string;
   cliente: string | null;
-  quantita: number | null;
+  targa: string;
+  nome_autista: string;
+  tipo_operazione: TipoOperazione;
   dimensioni: string | null;
   lat: number;
   lng: number;

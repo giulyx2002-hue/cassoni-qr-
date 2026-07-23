@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import type { Cassone } from "@/lib/types";
+import type { Cassone, TipoOperazione } from "@/lib/types";
+import { TIPI_OPERAZIONE } from "@/lib/types";
 
 type StatoPosizione =
   | { fase: "in-corso" }
@@ -14,9 +15,13 @@ export function MovimentoForm({ codice }: { codice: string }) {
   const [cassone, setCassone] = useState<Cassone | null | undefined>(undefined);
   const [posizione, setPosizione] = useState<StatoPosizione>({ fase: "in-corso" });
   const [cliente, setCliente] = useState("");
-  const [quantita, setQuantita] = useState("");
+  const [targa, setTarga] = useState("");
+  const [nomeAutista, setNomeAutista] = useState("");
+  const [tipoOperazione, setTipoOperazione] = useState<TipoOperazione | "">("");
   const [dimensioni, setDimensioni] = useState("");
   const [note, setNote] = useState("");
+  const [foto, setFoto] = useState<File[]>([]);
+  const anteprimeFoto = useMemo(() => foto.map((file) => URL.createObjectURL(file)), [foto]);
   const [salvataggio, setSalvataggio] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
   const [salvato, setSalvato] = useState(false);
@@ -33,6 +38,10 @@ export function MovimentoForm({ codice }: { codice: string }) {
         if (data?.dimensioni) setDimensioni(data.dimensioni);
       });
   }, [codice]);
+
+  useEffect(() => {
+    return () => anteprimeFoto.forEach((u) => URL.revokeObjectURL(u));
+  }, [anteprimeFoto]);
 
   function avviaRilevamento() {
     if (!navigator.geolocation) {
@@ -68,9 +77,22 @@ export function MovimentoForm({ codice }: { codice: string }) {
     avviaRilevamento();
   }, []);
 
+  function rimuoviFoto(indice: number) {
+    setFoto((prev) => prev.filter((_, i) => i !== indice));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (posizione.fase !== "ok" || !cassone) return;
+
+    if (!tipoOperazione) {
+      setErrore("Seleziona il tipo di operazione.");
+      return;
+    }
+    if (foto.length === 0) {
+      setErrore("Allega almeno una foto dello stato del cassone.");
+      return;
+    }
 
     setSalvataggio(true);
     setErrore(null);
@@ -86,13 +108,33 @@ export function MovimentoForm({ codice }: { codice: string }) {
       return;
     }
 
+    const fotoUrls: string[] = [];
+    for (const file of foto) {
+      const percorso = `${cassone.id}/${Date.now()}-${crypto.randomUUID()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("foto-cassoni")
+        .upload(percorso, file);
+
+      if (uploadError) {
+        setErrore(`Errore nel caricamento foto: ${uploadError.message}`);
+        setSalvataggio(false);
+        return;
+      }
+
+      const { data } = supabase.storage.from("foto-cassoni").getPublicUrl(percorso);
+      fotoUrls.push(data.publicUrl);
+    }
+
     const { error } = await supabase.from("movimenti").insert({
       cassone_id: cassone.id,
       dipendente_id: user.id,
       cliente: cliente || null,
-      quantita: quantita ? Number(quantita) : null,
+      targa,
+      nome_autista: nomeAutista,
+      tipo_operazione: tipoOperazione,
       dimensioni: dimensioni || null,
       note: note || null,
+      foto_urls: fotoUrls,
       lat: posizione.lat,
       lng: posizione.lng,
       accuratezza_metri: posizione.accuratezza,
@@ -156,14 +198,50 @@ export function MovimentoForm({ codice }: { codice: string }) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Quantità</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Targa camion
+            </label>
             <input
-              type="number"
-              min={0}
-              value={quantita}
-              onChange={(e) => setQuantita(e.target.value)}
+              type="text"
+              required
+              value={targa}
+              onChange={(e) => setTarga(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
             />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Nome autista
+            </label>
+            <input
+              type="text"
+              required
+              value={nomeAutista}
+              onChange={(e) => setNomeAutista(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Tipo operazione
+            </label>
+            <select
+              required
+              value={tipoOperazione}
+              onChange={(e) => setTipoOperazione(e.target.value as TipoOperazione)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+            >
+              <option value="" disabled>
+                Seleziona...
+              </option>
+              {TIPI_OPERAZIONE.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -184,6 +262,37 @@ export function MovimentoForm({ codice }: { codice: string }) {
               rows={3}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
             />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Foto stato cassone (almeno una)
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              multiple
+              onChange={(e) => setFoto((prev) => [...prev, ...Array.from(e.target.files ?? [])])}
+              className="w-full text-sm"
+            />
+            {anteprimeFoto.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {anteprimeFoto.map((src, i) => (
+                  <div key={src} className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => rimuoviFoto(i)}
+                      className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gray-900 text-xs text-white"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {errore && <p className="text-sm text-red-600">{errore}</p>}

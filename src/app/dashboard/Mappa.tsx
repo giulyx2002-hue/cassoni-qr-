@@ -3,7 +3,12 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import type { UltimaPosizione } from "@/lib/types";
+import type { TipoOperazione, UltimaPosizione } from "@/lib/types";
+import { TIPI_OPERAZIONE } from "@/lib/types";
+
+function labelOperazione(tipo: TipoOperazione) {
+  return TIPI_OPERAZIONE.find((t) => t.value === tipo)?.label ?? tipo;
+}
 
 const icona = L.divIcon({
   className: "",
@@ -39,7 +44,7 @@ export function Mappa({
             <div className="text-sm">
               <p className="font-semibold">{p.codice}</p>
               {p.cliente && <p>Cliente: {p.cliente}</p>}
-              {p.quantita != null && <p>Quantità: {p.quantita}</p>}
+              <p>{labelOperazione(p.tipo_operazione)} · targa {p.targa}</p>
               <p className="text-gray-500">
                 {new Date(p.ultimo_movimento).toLocaleString("it-IT")}
               </p>
