@@ -5,6 +5,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { Cassone, TipoOperazione } from "@/lib/types";
 import { TIPI_OPERAZIONE } from "@/lib/types";
+import { SchermataCard } from "@/components/SchermataCard";
+import { Logo } from "@/components/Logo";
 
 type StatoPosizione =
   | { fase: "in-corso" }
@@ -157,7 +159,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
   if (cassone === null) {
     return (
       <CentroMessaggio>
-        <p className="text-red-600">Nessun cassone trovato con codice {codice}.</p>
+        <p className="text-brand-orange-dark">Nessun cassone trovato con codice {codice}.</p>
         <Link href="/scansiona" className="mt-4 inline-block text-sm text-gray-500 hover:text-gray-900">
           Riprova la scansione
         </Link>
@@ -168,6 +170,11 @@ export function MovimentoForm({ codice }: { codice: string }) {
   if (salvato) {
     return (
       <CentroMessaggio>
+        <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-green-light text-brand-green-dark">
+          <svg viewBox="0 0 24 24" fill="none" strokeWidth={2} stroke="currentColor" className="h-6 w-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </span>
         <p className="text-lg font-semibold text-gray-900">Movimento registrato</p>
         <p className="mt-1 text-sm text-gray-500">Cassone {cassone.codice}</p>
         <Link href="/" className="mt-4 inline-block text-sm text-gray-500 hover:text-gray-900">
@@ -178,8 +185,8 @@ export function MovimentoForm({ codice }: { codice: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
-      <div className="mx-auto max-w-sm rounded-xl bg-white p-6 shadow-sm">
+    <SchermataCard>
+      <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-lg shadow-gray-200/50">
         <h1 className="mb-1 text-lg font-semibold text-gray-900">
           Cassone {cassone.codice}
         </h1>
@@ -193,7 +200,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
               type="text"
               value={cliente}
               onChange={(e) => setCliente(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
             />
           </div>
 
@@ -206,7 +213,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
               required
               value={targa}
               onChange={(e) => setTarga(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
             />
           </div>
 
@@ -219,7 +226,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
               required
               value={nomeAutista}
               onChange={(e) => setNomeAutista(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
             />
           </div>
 
@@ -231,7 +238,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
               required
               value={tipoOperazione}
               onChange={(e) => setTipoOperazione(e.target.value as TipoOperazione)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
             >
               <option value="" disabled>
                 Seleziona...
@@ -250,7 +257,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
               type="text"
               value={dimensioni}
               onChange={(e) => setDimensioni(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
             />
           </div>
 
@@ -260,7 +267,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
             />
           </div>
 
@@ -295,12 +302,16 @@ export function MovimentoForm({ codice }: { codice: string }) {
             )}
           </div>
 
-          {errore && <p className="text-sm text-red-600">{errore}</p>}
+          {errore && (
+            <p className="rounded-lg bg-brand-orange-light px-3 py-2 text-sm text-brand-orange-dark">
+              {errore}
+            </p>
+          )}
 
           <button
             type="submit"
             disabled={salvataggio || posizione.fase !== "ok"}
-            className="w-full rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+            className="w-full rounded-lg bg-brand-green-dark px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-green-dark/90 disabled:opacity-50"
           >
             {salvataggio ? "Salvataggio in corso..." : "Registra movimento"}
           </button>
@@ -310,7 +321,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
           Annulla
         </Link>
       </div>
-    </div>
+    </SchermataCard>
   );
 }
 
@@ -326,7 +337,7 @@ function PosizioneStato({
   }
   if (posizione.fase === "errore") {
     return (
-      <div className="text-sm text-red-600">
+      <div className="rounded-lg bg-brand-orange-light px-3 py-2 text-sm text-brand-orange-dark">
         <p>{posizione.messaggio}</p>
         <button onClick={onRiprova} className="mt-1 underline">
           Riprova
@@ -335,7 +346,7 @@ function PosizioneStato({
     );
   }
   return (
-    <p className="text-sm text-green-700">
+    <p className="rounded-lg bg-brand-green-light px-3 py-2 text-sm text-brand-green-dark">
       Posizione rilevata (±{Math.round(posizione.accuratezza)} m)
     </p>
   );
@@ -343,8 +354,11 @@ function PosizioneStato({
 
 function CentroMessaggio({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-sm text-center">{children}</div>
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-gradient-to-b from-brand-green-light/60 to-gray-50 px-4">
+      <Logo className="h-9" />
+      <div className="max-w-sm rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-lg shadow-gray-200/50">
+        {children}
+      </div>
     </div>
   );
 }

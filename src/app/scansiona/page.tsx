@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Html5Qrcode } from "html5-qrcode";
+import { SchermataCard } from "@/components/SchermataCard";
 
 const REGION_ID = "qr-reader";
 
@@ -57,8 +58,8 @@ export default function ScansionaPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
-      <div className="mx-auto max-w-sm rounded-xl bg-white p-6 shadow-sm">
+    <SchermataCard>
+      <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-lg shadow-gray-200/50">
         <h1 className="mb-1 text-lg font-semibold text-gray-900">
           Scansiona cassone
         </h1>
@@ -66,7 +67,11 @@ export default function ScansionaPage() {
           Inquadra il QR stampato sul cassone
         </p>
 
-        {errore && <p className="mb-4 text-sm text-red-600">{errore}</p>}
+        {errore && (
+          <p className="mb-4 rounded-lg bg-brand-orange-light px-3 py-2 text-sm text-brand-orange-dark">
+            {errore}
+          </p>
+        )}
 
         <div id={REGION_ID} className="overflow-hidden rounded-lg bg-black" />
 
@@ -83,6 +88,6 @@ export default function ScansionaPage() {
           Annulla
         </Link>
       </div>
-    </div>
+    </SchermataCard>
   );
 }

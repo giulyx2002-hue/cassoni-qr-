@@ -12,7 +12,7 @@ function labelOperazione(tipo: TipoOperazione) {
 
 const icona = L.divIcon({
   className: "",
-  html: `<div style="background:#111827;width:16px;height:16px;border-radius:9999px;border:2px solid white;box-shadow:0 0 0 1px #111827"></div>`,
+  html: `<div style="background:#5a9a2b;width:16px;height:16px;border-radius:9999px;border:2px solid white;box-shadow:0 0 0 1px #5a9a2b"></div>`,
   iconSize: [16, 16],
   iconAnchor: [8, 8],
 });

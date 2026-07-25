@@ -159,7 +159,7 @@ export function DashboardClient({
             placeholder="Filtra per codice o cliente..."
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
           />
         </div>
 
@@ -202,7 +202,7 @@ export function DashboardClient({
                 <li key={c.id}>
                   <button
                     onClick={() => setSelezionato(c.id)}
-                    className="block w-full px-4 py-3 text-left hover:bg-gray-50"
+                    className="block w-full px-4 py-3 text-left transition-colors hover:bg-brand-green-light/40"
                   >
                     <p className="font-medium text-gray-900">{c.codice}</p>
                     {pos ? (
@@ -259,7 +259,7 @@ function GestioneCassone({
         <h2 className="font-semibold text-gray-900">{cassone.codice}</h2>
         {!modifica && (
           <div className="flex gap-2">
-            <button onClick={() => setModifica(true)} className="text-sm text-gray-500 hover:text-gray-900">
+            <button onClick={() => setModifica(true)} className="text-sm text-brand-green-dark hover:text-brand-green-dark/80">
               Modifica
             </button>
             <button onClick={onElimina} className="text-sm text-red-600 hover:text-red-800">
@@ -276,20 +276,20 @@ function GestioneCassone({
             placeholder="Dimensioni"
             value={dimensioni}
             onChange={(e) => setDimensioni(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
           />
           <textarea
             placeholder="Note"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={2}
-            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
           />
           <div className="flex gap-2">
             <button
               onClick={salva}
               disabled={salvataggio}
-              className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+              className="rounded-lg bg-brand-green-dark px-3 py-1.5 text-sm text-white transition-colors hover:bg-brand-green-dark/90 disabled:opacity-50"
             >
               {salvataggio ? "Salvataggio..." : "Salva"}
             </button>
@@ -351,24 +351,24 @@ function MovimentoItem({
             value={cliente}
             onChange={(e) => setCliente(e.target.value)}
             placeholder="Cliente"
-            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
           />
           <input
             value={targa}
             onChange={(e) => setTarga(e.target.value)}
             placeholder="Targa"
-            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
           />
           <input
             value={nomeAutista}
             onChange={(e) => setNomeAutista(e.target.value)}
             placeholder="Nome autista"
-            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
           />
           <select
             value={tipoOperazione}
             onChange={(e) => setTipoOperazione(e.target.value as TipoOperazione)}
-            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
           >
             {TIPI_OPERAZIONE.map((t) => (
               <option key={t.value} value={t.value}>
@@ -380,20 +380,20 @@ function MovimentoItem({
             value={dimensioni}
             onChange={(e) => setDimensioni(e.target.value)}
             placeholder="Dimensioni"
-            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
           />
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Note"
             rows={2}
-            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-900 focus:outline-none"
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
           />
           <div className="flex gap-2">
             <button
               onClick={salva}
               disabled={salvataggio}
-              className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
+              className="rounded-lg bg-brand-green-dark px-3 py-1.5 text-sm text-white transition-colors hover:bg-brand-green-dark/90 disabled:opacity-50"
             >
               {salvataggio ? "Salvataggio..." : "Salva"}
             </button>
@@ -414,7 +414,7 @@ function MovimentoItem({
       <div className="flex items-start justify-between gap-2">
         <p className="text-gray-500">{new Date(movimento.created_at).toLocaleString("it-IT")}</p>
         <div className="flex shrink-0 gap-2">
-          <button onClick={() => setModifica(true)} className="text-gray-500 hover:text-gray-900">
+          <button onClick={() => setModifica(true)} className="text-brand-green-dark hover:text-brand-green-dark/80">
             Modifica
           </button>
           <button onClick={onElimina} className="text-red-600 hover:text-red-800">

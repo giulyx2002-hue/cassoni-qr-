@@ -6,6 +6,7 @@ import Link from "next/link";
 import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/client";
 import { generaCodice } from "@/lib/codice";
+import { SchermataCard } from "@/components/SchermataCard";
 
 interface CassoneCreato {
   codice: string;
@@ -77,8 +78,8 @@ export default function GeneraPage() {
 
   if (creato) {
     return (
-      <div className="min-h-screen bg-gray-50 px-4 py-8">
-        <div className="mx-auto max-w-sm rounded-xl bg-white p-6 text-center shadow-sm print:shadow-none">
+      <SchermataCard>
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-lg shadow-gray-200/50 print:shadow-none">
           <Image
             src={creato.qrDataUrl}
             alt={`QR cassone ${creato.codice}`}
@@ -98,7 +99,7 @@ export default function GeneraPage() {
           <div className="mt-6 flex gap-3 print:hidden">
             <button
               onClick={() => window.print()}
-              className="flex-1 rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800"
+              className="flex-1 rounded-lg bg-brand-green-dark px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-green-dark/90"
             >
               Stampa
             </button>
@@ -116,13 +117,13 @@ export default function GeneraPage() {
             Torna alla home
           </Link>
         </div>
-      </div>
+      </SchermataCard>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
-      <div className="mx-auto max-w-sm rounded-xl bg-white p-6 shadow-sm">
+    <SchermataCard>
+      <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-lg shadow-gray-200/50">
         <h1 className="mb-1 text-lg font-semibold text-gray-900">
           Genera nuovo cassone
         </h1>
@@ -140,7 +141,7 @@ export default function GeneraPage() {
               placeholder="es. 3x2x1,5 m"
               value={dimensioni}
               onChange={(e) => setDimensioni(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
             />
           </div>
 
@@ -152,16 +153,20 @@ export default function GeneraPage() {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
             />
           </div>
 
-          {errore && <p className="text-sm text-red-600">{errore}</p>}
+          {errore && (
+            <p className="rounded-lg bg-brand-orange-light px-3 py-2 text-sm text-brand-orange-dark">
+              {errore}
+            </p>
+          )}
 
           <button
             type="submit"
             disabled={caricamento}
-            className="w-full rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+            className="w-full rounded-lg bg-brand-green-dark px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-green-dark/90 disabled:opacity-50"
           >
             {caricamento ? "Creazione in corso..." : "Genera QR"}
           </button>
@@ -174,6 +179,6 @@ export default function GeneraPage() {
           Annulla
         </Link>
       </div>
-    </div>
+    </SchermataCard>
   );
 }
