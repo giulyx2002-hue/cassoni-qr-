@@ -54,9 +54,6 @@ export default async function HomePage() {
     <div className="min-h-screen bg-gradient-to-b from-brand-green-light/60 to-gray-50">
       <Header profile={profile} />
       <main className="mx-auto max-w-md px-4 py-10">
-        <p className="mb-6 text-sm text-gray-500">
-          Ciao{profile ? `, ${profile.nome.split("@")[0]}` : ""} 👋 cosa vuoi fare?
-        </p>
         <div className="space-y-3">
           {voci.map((voce) => (
             <Link
