@@ -35,6 +35,9 @@ create table movimenti (
   dimensioni text,
   note text,
   foto_urls text[] not null default '{}',
+  cliente_email text,
+  firma_url text,
+  pdf_url text,
   lat double precision not null,
   lng double precision not null,
   accuratezza_metri double precision,
@@ -166,3 +169,18 @@ create policy "admin elimina foto cassoni"
   on storage.objects for delete
   to authenticated
   using (bucket_id = 'foto-cassoni' and public.is_admin());
+
+-- Bucket storage per firme cliente e PDF di consegna generati
+insert into storage.buckets (id, name, public)
+values ('documenti-movimento', 'documenti-movimento', true)
+on conflict (id) do nothing;
+
+create policy "utenti autenticati caricano documenti movimento"
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'documenti-movimento');
+
+create policy "admin elimina documenti movimento"
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'documenti-movimento' and public.is_admin());

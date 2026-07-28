@@ -1,22 +1,30 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { Cassone, TipoOperazione } from "@/lib/types";
 import { TIPI_OPERAZIONE } from "@/lib/types";
 import { SchermataCard } from "@/components/SchermataCard";
 import { Logo } from "@/components/Logo";
+import { FirmaCanvas, type FirmaCanvasHandle } from "@/components/FirmaCanvas";
+import { generaPdfConsegna } from "@/lib/pdfConsegna";
 
 type StatoPosizione =
   | { fase: "in-corso" }
   | { fase: "ok"; lat: number; lng: number; accuratezza: number }
   | { fase: "errore"; messaggio: string };
 
+type StatoFinale =
+  | { fase: "salvato" }
+  | { fase: "salvato-email-ok"; email: string }
+  | { fase: "salvato-email-errore"; email: string };
+
 export function MovimentoForm({ codice }: { codice: string }) {
   const [cassone, setCassone] = useState<Cassone | null | undefined>(undefined);
   const [posizione, setPosizione] = useState<StatoPosizione>({ fase: "in-corso" });
   const [cliente, setCliente] = useState("");
+  const [clienteEmail, setClienteEmail] = useState("");
   const [targa, setTarga] = useState("");
   const [nomeAutista, setNomeAutista] = useState("");
   const [tipoOperazione, setTipoOperazione] = useState<TipoOperazione | "">("");
@@ -24,9 +32,13 @@ export function MovimentoForm({ codice }: { codice: string }) {
   const [note, setNote] = useState("");
   const [foto, setFoto] = useState<File[]>([]);
   const anteprimeFoto = useMemo(() => foto.map((file) => URL.createObjectURL(file)), [foto]);
+  const firmaRef = useRef<FirmaCanvasHandle>(null);
   const [salvataggio, setSalvataggio] = useState(false);
+  const [messaggioSalvataggio, setMessaggioSalvataggio] = useState<string | null>(null);
   const [errore, setErrore] = useState<string | null>(null);
-  const [salvato, setSalvato] = useState(false);
+  const [salvato, setSalvato] = useState<StatoFinale | null>(null);
+
+  const isConsegna = tipoOperazione === "consegna";
 
   useEffect(() => {
     const supabase = createClient();
@@ -95,6 +107,14 @@ export function MovimentoForm({ codice }: { codice: string }) {
       setErrore("Allega almeno una foto dello stato del cassone.");
       return;
     }
+    if (isConsegna && !clienteEmail) {
+      setErrore("Inserisci l'email del cliente per la consegna.");
+      return;
+    }
+    if (isConsegna && (firmaRef.current?.isEmpty() ?? true)) {
+      setErrore("Fai firmare il cliente prima di registrare la consegna.");
+      return;
+    }
 
     setSalvataggio(true);
     setErrore(null);
@@ -110,6 +130,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
       return;
     }
 
+    setMessaggioSalvataggio("Caricamento foto in corso...");
     const fotoUrls: string[] = [];
     for (const file of foto) {
       const percorso = `${cassone.id}/${Date.now()}-${crypto.randomUUID()}-${file.name}`;
@@ -120,6 +141,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
       if (uploadError) {
         setErrore(`Errore nel caricamento foto: ${uploadError.message}`);
         setSalvataggio(false);
+        setMessaggioSalvataggio(null);
         return;
       }
 
@@ -127,29 +149,113 @@ export function MovimentoForm({ codice }: { codice: string }) {
       fotoUrls.push(data.publicUrl);
     }
 
+    let firmaUrl: string | null = null;
+    let pdfUrl: string | null = null;
+    const dataOra = new Date();
+
+    if (isConsegna) {
+      const firmaBlob = await firmaRef.current?.toBlob();
+      if (!firmaBlob) {
+        setErrore("Errore nella cattura della firma, riprova.");
+        setSalvataggio(false);
+        setMessaggioSalvataggio(null);
+        return;
+      }
+
+      setMessaggioSalvataggio("Salvataggio firma in corso...");
+      const percorsoFirma = `${cassone.id}/firma-${Date.now()}.png`;
+      const { error: erroreFirma } = await supabase.storage
+        .from("documenti-movimento")
+        .upload(percorsoFirma, firmaBlob, { contentType: "image/png" });
+
+      if (erroreFirma) {
+        setErrore(`Errore nel salvataggio della firma: ${erroreFirma.message}`);
+        setSalvataggio(false);
+        setMessaggioSalvataggio(null);
+        return;
+      }
+      firmaUrl = supabase.storage.from("documenti-movimento").getPublicUrl(percorsoFirma).data.publicUrl;
+
+      setMessaggioSalvataggio("Generazione PDF in corso...");
+      const pdfBlob = await generaPdfConsegna({
+        codiceCassone: cassone.codice,
+        cliente,
+        clienteEmail,
+        targa,
+        nomeAutista,
+        tipoOperazione,
+        dimensioni,
+        note,
+        lat: posizione.lat,
+        lng: posizione.lng,
+        foto,
+        firmaBlob,
+        dataOra,
+      });
+
+      const percorsoPdf = `${cassone.id}/consegna-${Date.now()}.pdf`;
+      const { error: errorePdf } = await supabase.storage
+        .from("documenti-movimento")
+        .upload(percorsoPdf, pdfBlob, { contentType: "application/pdf" });
+
+      if (errorePdf) {
+        setErrore(`Errore nel salvataggio del PDF: ${errorePdf.message}`);
+        setSalvataggio(false);
+        setMessaggioSalvataggio(null);
+        return;
+      }
+      pdfUrl = supabase.storage.from("documenti-movimento").getPublicUrl(percorsoPdf).data.publicUrl;
+    }
+
+    setMessaggioSalvataggio("Salvataggio movimento in corso...");
     const { error } = await supabase.from("movimenti").insert({
       cassone_id: cassone.id,
       dipendente_id: user.id,
       cliente: cliente || null,
+      cliente_email: clienteEmail || null,
       targa,
       nome_autista: nomeAutista,
       tipo_operazione: tipoOperazione,
       dimensioni: dimensioni || null,
       note: note || null,
       foto_urls: fotoUrls,
+      firma_url: firmaUrl,
+      pdf_url: pdfUrl,
       lat: posizione.lat,
       lng: posizione.lng,
       accuratezza_metri: posizione.accuratezza,
+      created_at: dataOra.toISOString(),
     });
 
-    setSalvataggio(false);
-
     if (error) {
+      setSalvataggio(false);
+      setMessaggioSalvataggio(null);
       setErrore(`Errore nel salvataggio: ${error.message}`);
       return;
     }
 
-    setSalvato(true);
+    if (isConsegna && pdfUrl) {
+      setMessaggioSalvataggio("Invio email al cliente in corso...");
+      try {
+        const risposta = await fetch("/api/invia-pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: clienteEmail, pdfUrl, codice: cassone.codice, cliente }),
+        });
+        setSalvato(
+          risposta.ok
+            ? { fase: "salvato-email-ok", email: clienteEmail }
+            : { fase: "salvato-email-errore", email: clienteEmail }
+        );
+      } catch {
+        setSalvato({ fase: "salvato-email-errore", email: clienteEmail });
+      }
+    } else {
+      setSalvato({ fase: "salvato" });
+    }
+
+    setSalvataggio(false);
+    setMessaggioSalvataggio(null);
   }
 
   if (cassone === undefined) {
@@ -177,6 +283,17 @@ export function MovimentoForm({ codice }: { codice: string }) {
         </span>
         <p className="text-lg font-semibold text-gray-900">Movimento registrato</p>
         <p className="mt-1 text-sm text-gray-500">Cassone {cassone.codice}</p>
+        {salvato.fase === "salvato-email-ok" && (
+          <p className="mt-3 rounded-lg bg-brand-green-light px-3 py-2 text-sm text-brand-green-dark">
+            PDF inviato a {salvato.email}
+          </p>
+        )}
+        {salvato.fase === "salvato-email-errore" && (
+          <p className="mt-3 rounded-lg bg-brand-orange-light px-3 py-2 text-sm text-brand-orange-dark">
+            Movimento salvato, ma l&apos;invio del PDF a {salvato.email} non è riuscito. Il documento
+            resta disponibile in dashboard.
+          </p>
+        )}
         <Link href="/" className="mt-4 inline-block text-sm text-gray-500 hover:text-gray-900">
           Torna alla home
         </Link>
@@ -302,6 +419,46 @@ export function MovimentoForm({ codice }: { codice: string }) {
             )}
           </div>
 
+          {isConsegna && (
+            <>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Email cliente
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={clienteEmail}
+                  onChange={(e) => setClienteEmail(e.target.value)}
+                  placeholder="cliente@esempio.it"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  Riceverà via email il PDF con lo stato del cassone e la firma.
+                </p>
+              </div>
+
+              <div>
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Firma cliente
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => firmaRef.current?.clear()}
+                    className="text-xs text-gray-500 hover:text-gray-900"
+                  >
+                    Cancella
+                  </button>
+                </div>
+                <FirmaCanvas ref={firmaRef} />
+                <p className="mt-1 text-xs text-gray-400">
+                  Fai firmare il cliente col dito o con il mouse nel riquadro qui sopra.
+                </p>
+              </div>
+            </>
+          )}
+
           {errore && (
             <p className="rounded-lg bg-brand-orange-light px-3 py-2 text-sm text-brand-orange-dark">
               {errore}
@@ -313,7 +470,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
             disabled={salvataggio || posizione.fase !== "ok"}
             className="w-full rounded-lg bg-brand-green-dark px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-green-dark/90 disabled:opacity-50"
           >
-            {salvataggio ? "Salvataggio in corso..." : "Registra movimento"}
+            {salvataggio ? messaggioSalvataggio ?? "Salvataggio in corso..." : "Registra movimento"}
           </button>
         </form>
 

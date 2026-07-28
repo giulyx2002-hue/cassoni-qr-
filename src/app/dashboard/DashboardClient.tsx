@@ -322,6 +322,7 @@ function MovimentoItem({
 }) {
   const [modifica, setModifica] = useState(false);
   const [cliente, setCliente] = useState(movimento.cliente ?? "");
+  const [clienteEmail, setClienteEmail] = useState(movimento.cliente_email ?? "");
   const [targa, setTarga] = useState(movimento.targa);
   const [nomeAutista, setNomeAutista] = useState(movimento.nome_autista);
   const [tipoOperazione, setTipoOperazione] = useState<TipoOperazione>(movimento.tipo_operazione);
@@ -333,6 +334,7 @@ function MovimentoItem({
     setSalvataggio(true);
     const ok = await onSalva({
       cliente: cliente || null,
+      cliente_email: clienteEmail || null,
       targa,
       nome_autista: nomeAutista,
       tipo_operazione: tipoOperazione,
@@ -351,6 +353,13 @@ function MovimentoItem({
             value={cliente}
             onChange={(e) => setCliente(e.target.value)}
             placeholder="Cliente"
+            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
+          />
+          <input
+            type="email"
+            value={clienteEmail}
+            onChange={(e) => setClienteEmail(e.target.value)}
+            placeholder="Email cliente"
             className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
           />
           <input
@@ -424,6 +433,7 @@ function MovimentoItem({
       </div>
       <p className="font-medium">{labelOperazione(movimento.tipo_operazione)}</p>
       {movimento.cliente && <p>Cliente: {movimento.cliente}</p>}
+      {movimento.cliente_email && <p>Email cliente: {movimento.cliente_email}</p>}
       <p>Targa: {movimento.targa}</p>
       <p>Autista: {movimento.nome_autista}</p>
       {movimento.dimensioni && <p>Dimensioni: {movimento.dimensioni}</p>}
@@ -439,6 +449,30 @@ function MovimentoItem({
               <img src={url} alt="Stato cassone" className="h-16 w-16 rounded-lg object-cover" />
             </a>
           ))}
+        </div>
+      )}
+      {(movimento.firma_url || movimento.pdf_url) && (
+        <div className="mt-2 flex items-center gap-3 border-t border-gray-100 pt-2">
+          {movimento.firma_url && (
+            <a href={movimento.firma_url} target="_blank" rel="noreferrer" className="shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={movimento.firma_url}
+                alt="Firma cliente"
+                className="h-12 w-24 rounded-lg border border-gray-200 bg-white object-contain"
+              />
+            </a>
+          )}
+          {movimento.pdf_url && (
+            <a
+              href={movimento.pdf_url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-brand-green-dark underline hover:text-brand-green-dark/80"
+            >
+              Apri PDF di consegna
+            </a>
+          )}
         </div>
       )}
     </li>

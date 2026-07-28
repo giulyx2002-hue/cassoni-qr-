@@ -3,9 +3,11 @@
 Web app (PWA) per generare QR sulle casse scarrabili, scansionarli da smartphone,
 registrare posizione GPS + dettagli del movimento (cliente, targa camion, autista,
 tipo operazione, dimensioni, foto dello stato) e vedere/gestire tutto su una
-dashboard con mappa in tempo reale.
+dashboard con mappa in tempo reale. Per le consegne, il cliente firma sul telefono
+del dipendente e riceve automaticamente via email un PDF con lo stato del cassone.
 
-Stack: **Next.js** (App Router) + **Supabase** (Postgres, autenticazione, realtime).
+Stack: **Next.js** (App Router) + **Supabase** (Postgres, autenticazione, realtime,
+storage) + **Resend** (invio email).
 
 ## 1. Crea il progetto Supabase
 
@@ -27,15 +29,37 @@ Aggiorna la tabella `movimenti` (rimuove `quantita`, aggiunge i nuovi campi),
 crea il bucket foto e aggiunge i permessi di modifica/eliminazione per l'admin,
 senza perdere i dati già presenti.
 
-## 2. Configura le variabili d'ambiente
+Se invece il progetto esisteva già ma non ha ancora email cliente/firma/PDF,
+esegui anche [`supabase/migrations/003_firma_pdf_email.sql`](supabase/migrations/003_firma_pdf_email.sql).
 
-Copia `.env.local.example` in `.env.local` e incolla i valori copiati sopra:
+## 2. Crea un account Resend (per l'invio email)
+
+1. Vai su [resend.com](https://resend.com) e crea un account gratuito (3.000 email/mese incluse).
+2. Vai su **API Keys → Create API Key**, copia la chiave (inizia con `re_`).
+3. Per inviare email a indirizzi qualsiasi (non solo alla tua email di test) devi
+   verificare un dominio: **Domains → Add Domain**, inserisci un (sotto)dominio
+   dell'azienda (es. `mail.morgans.it`) e segui le istruzioni per aggiungere i
+   record DNS. Senza dominio verificato puoi comunque testare inviando solo
+   all'indirizzo con cui ti sei registrato su Resend.
+4. Una volta verificato il dominio, scegli un indirizzo mittente su quel dominio
+   (es. `consegne@mail.morgans.it`).
+
+## 3. Configura le variabili d'ambiente
+
+Copia `.env.local.example` in `.env.local`:
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-## 3. Installa e avvia
+E compila:
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`: dal passo 1.
+- `RESEND_API_KEY`: dal passo 2.
+- `RESEND_FROM_EMAIL`: l'indirizzo mittente verificato (passo 2.4). Finché non
+  verifichi un dominio, puoi lasciarlo vuoto: verrà usato `onboarding@resend.dev`,
+  utilizzabile solo per test verso la tua stessa email Resend.
+
+## 4. Installa e avvia
 
 ```bash
 npm install
@@ -44,7 +68,7 @@ npm run dev
 
 Apri [http://localhost:3000](http://localhost:3000).
 
-## 4. Crea i primi utenti
+## 5. Crea i primi utenti
 
 Non esiste una pagina di registrazione pubblica (per evitare accessi non autorizzati
 all'app aziendale). Gli utenti si creano da Supabase:
@@ -67,11 +91,17 @@ all'app aziendale). Gli utenti si creano da Supabase:
   (prelievo/consegna/spostamento), dimensioni, note e almeno una foto dello stato
   del cassone (obbligatoria). Ogni invio crea un nuovo "movimento" collegato a
   quel cassone e carica le foto nello storage Supabase.
+- **Consegna al cliente**: se il tipo operazione è "Consegna", il form chiede anche
+  l'email del cliente e la sua firma (raccolta direttamente sullo schermo del
+  telefono del dipendente). Al salvataggio viene generato automaticamente un PDF
+  con i dati del movimento, le foto e la firma, salvato nello storage e inviato
+  via email al cliente (tramite Resend).
 - **Dashboard** (`/dashboard`, solo admin): mappa con l'ultima posizione nota di ogni
   cassone, elenco di tutti i cassoni (anche quelli mai scansionati) filtrabile,
-  storico movimenti per cassone con foto, aggiornamento in tempo reale quando un
-  dipendente scansiona. L'admin può modificare o eliminare sia i singoli movimenti
-  sia un cassone intero (con tutto il suo storico).
+  storico movimenti per cassone con foto (e firma/PDF per le consegne),
+  aggiornamento in tempo reale quando un dipendente scansiona. L'admin può
+  modificare o eliminare sia i singoli movimenti sia un cassone intero (con
+  tutto il suo storico).
 
 ## Installare l'app sul telefono (PWA)
 
