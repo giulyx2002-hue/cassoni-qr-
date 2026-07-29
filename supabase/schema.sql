@@ -89,10 +89,10 @@ create policy "utenti autenticati leggono i profili"
   to authenticated
   using (true);
 
-create policy "un utente aggiorna solo il proprio profilo"
+create policy "admin aggiorna i profili"
   on profiles for update
   to authenticated
-  using (id = auth.uid());
+  using (public.is_admin());
 
 create policy "utenti autenticati leggono i cassoni"
   on cassoni for select
@@ -156,8 +156,11 @@ alter publication supabase_realtime add table movimenti;
 alter publication supabase_realtime add table cassoni;
 
 -- Bucket storage per le foto dello stato del cassone
-insert into storage.buckets (id, name, public)
-values ('foto-cassoni', 'foto-cassoni', true)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'foto-cassoni', 'foto-cassoni', true, 10485760,
+  array['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
+)
 on conflict (id) do nothing;
 
 create policy "utenti autenticati caricano foto cassoni"
@@ -171,8 +174,11 @@ create policy "admin elimina foto cassoni"
   using (bucket_id = 'foto-cassoni' and public.is_admin());
 
 -- Bucket storage per firme cliente e PDF di consegna generati
-insert into storage.buckets (id, name, public)
-values ('documenti-movimento', 'documenti-movimento', true)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'documenti-movimento', 'documenti-movimento', true, 15728640,
+  array['image/png', 'application/pdf']
+)
 on conflict (id) do nothing;
 
 create policy "utenti autenticati caricano documenti movimento"

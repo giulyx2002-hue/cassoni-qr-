@@ -224,7 +224,6 @@ export function MovimentoForm({ codice }: { codice: string }) {
       lat: posizione.lat,
       lng: posizione.lng,
       accuratezza_metri: posizione.accuratezza,
-      created_at: dataOra.toISOString(),
     });
 
     if (error) {
