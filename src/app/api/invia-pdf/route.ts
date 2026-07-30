@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Dati mancanti" }, { status: 400 });
   }
 
-  const prefissoStorageConsentito = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/documenti-movimento/`;
+  const prefissoStorageConsentito = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/sign/documenti-movimento/`;
   if (typeof pdfUrl !== "string" || !pdfUrl.startsWith(prefissoStorageConsentito)) {
     return NextResponse.json({ error: "URL del PDF non valido" }, { status: 400 });
   }

@@ -32,6 +32,13 @@ senza perdere i dati già presenti.
 Se invece il progetto esisteva già ma non ha ancora email cliente/firma/PDF,
 esegui anche [`supabase/migrations/003_firma_pdf_email.sql`](supabase/migrations/003_firma_pdf_email.sql).
 
+Se il progetto esisteva già da prima delle migrazioni di sicurezza, esegui anche,
+in ordine, [`supabase/migrations/004_sicurezza_profili.sql`](supabase/migrations/004_sicurezza_profili.sql)
+e [`supabase/migrations/005_storage_privato.sql`](supabase/migrations/005_storage_privato.sql).
+La 005 rende privati i bucket delle foto/firme/PDF (prima erano pubblici): i
+movimenti creati prima di questa migrazione avranno link foto/firma/PDF non
+più funzionanti, quelli creati dopo useranno link firmati e protetti.
+
 ## 2. Crea un account Resend (per l'invio email)
 
 1. Vai su [resend.com](https://resend.com) e crea un account gratuito (3.000 email/mese incluse).
@@ -120,3 +127,6 @@ che i browser abilitano solo su connessioni sicure).
 - Le icone in `public/icons/` sono placeholder generati automaticamente: sostituiscile
   con il logo dell'azienda quando pronto (stesse dimensioni: 180×180, 192×192, 512×512).
 - Non è richiesto supporto offline: la scansione richiede connessione internet attiva.
+- Foto, firme e PDF sono privati: i link salvati nel database sono firmati con un
+  token e scadono dopo 10 anni (di fatto permanenti per l'uso quotidiano), ma non
+  sono raggiungibili da chi non ha il link esatto né elencabili pubblicamente.

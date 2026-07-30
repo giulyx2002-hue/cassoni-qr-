@@ -155,10 +155,12 @@ create trigger on_auth_user_created
 alter publication supabase_realtime add table movimenti;
 alter publication supabase_realtime add table cassoni;
 
--- Bucket storage per le foto dello stato del cassone
+-- Bucket storage per le foto dello stato del cassone.
+-- Privato: i file sono raggiungibili solo con link firmati generati dall'app
+-- (vedi SCADENZA_LINK_SECONDI lato client), non con URL pubblici indovinabili.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
-  'foto-cassoni', 'foto-cassoni', true, 10485760,
+  'foto-cassoni', 'foto-cassoni', false, 10485760,
   array['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
 )
 on conflict (id) do nothing;
@@ -168,15 +170,20 @@ create policy "utenti autenticati caricano foto cassoni"
   to authenticated
   with check (bucket_id = 'foto-cassoni');
 
+create policy "utenti autenticati leggono foto cassoni"
+  on storage.objects for select
+  to authenticated
+  using (bucket_id = 'foto-cassoni');
+
 create policy "admin elimina foto cassoni"
   on storage.objects for delete
   to authenticated
   using (bucket_id = 'foto-cassoni' and public.is_admin());
 
--- Bucket storage per firme cliente e PDF di consegna generati
+-- Bucket storage per firme cliente e PDF di consegna generati (anch'esso privato).
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
-  'documenti-movimento', 'documenti-movimento', true, 15728640,
+  'documenti-movimento', 'documenti-movimento', false, 15728640,
   array['image/png', 'application/pdf']
 )
 on conflict (id) do nothing;
@@ -185,6 +192,11 @@ create policy "utenti autenticati caricano documenti movimento"
   on storage.objects for insert
   to authenticated
   with check (bucket_id = 'documenti-movimento');
+
+create policy "utenti autenticati leggono documenti movimento"
+  on storage.objects for select
+  to authenticated
+  using (bucket_id = 'documenti-movimento');
 
 create policy "admin elimina documenti movimento"
   on storage.objects for delete

@@ -20,6 +20,11 @@ type StatoFinale =
   | { fase: "salvato-email-ok"; email: string }
   | { fase: "salvato-email-errore"; email: string };
 
+// I bucket sono privati: i link vengono "firmati" con un token e una scadenza.
+// Si usa una scadenza lunghissima (10 anni) così il link resta valido finché
+// non viene condiviso fuori dai canali previsti (email al cliente, dashboard).
+const SCADENZA_LINK_SECONDI = 10 * 365 * 24 * 60 * 60;
+
 export function MovimentoForm({ codice }: { codice: string }) {
   const [cassone, setCassone] = useState<Cassone | null | undefined>(undefined);
   const [posizione, setPosizione] = useState<StatoPosizione>({ fase: "in-corso" });
@@ -145,8 +150,17 @@ export function MovimentoForm({ codice }: { codice: string }) {
         return;
       }
 
-      const { data } = supabase.storage.from("foto-cassoni").getPublicUrl(percorso);
-      fotoUrls.push(data.publicUrl);
+      const { data, error: erroreLink } = await supabase.storage
+        .from("foto-cassoni")
+        .createSignedUrl(percorso, SCADENZA_LINK_SECONDI);
+
+      if (erroreLink || !data) {
+        setErrore(`Errore nella creazione del link foto: ${erroreLink?.message ?? "sconosciuto"}`);
+        setSalvataggio(false);
+        setMessaggioSalvataggio(null);
+        return;
+      }
+      fotoUrls.push(data.signedUrl);
     }
 
     let firmaUrl: string | null = null;
@@ -174,7 +188,17 @@ export function MovimentoForm({ codice }: { codice: string }) {
         setMessaggioSalvataggio(null);
         return;
       }
-      firmaUrl = supabase.storage.from("documenti-movimento").getPublicUrl(percorsoFirma).data.publicUrl;
+      const { data: datiFirma, error: erroreLinkFirma } = await supabase.storage
+        .from("documenti-movimento")
+        .createSignedUrl(percorsoFirma, SCADENZA_LINK_SECONDI);
+
+      if (erroreLinkFirma || !datiFirma) {
+        setErrore(`Errore nella creazione del link firma: ${erroreLinkFirma?.message ?? "sconosciuto"}`);
+        setSalvataggio(false);
+        setMessaggioSalvataggio(null);
+        return;
+      }
+      firmaUrl = datiFirma.signedUrl;
 
       setMessaggioSalvataggio("Generazione PDF in corso...");
       const pdfBlob = await generaPdfConsegna({
@@ -204,7 +228,17 @@ export function MovimentoForm({ codice }: { codice: string }) {
         setMessaggioSalvataggio(null);
         return;
       }
-      pdfUrl = supabase.storage.from("documenti-movimento").getPublicUrl(percorsoPdf).data.publicUrl;
+      const { data: datiPdf, error: erroreLinkPdf } = await supabase.storage
+        .from("documenti-movimento")
+        .createSignedUrl(percorsoPdf, SCADENZA_LINK_SECONDI);
+
+      if (erroreLinkPdf || !datiPdf) {
+        setErrore(`Errore nella creazione del link PDF: ${erroreLinkPdf?.message ?? "sconosciuto"}`);
+        setSalvataggio(false);
+        setMessaggioSalvataggio(null);
+        return;
+      }
+      pdfUrl = datiPdf.signedUrl;
     }
 
     setMessaggioSalvataggio("Salvataggio movimento in corso...");
