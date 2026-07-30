@@ -37,6 +37,7 @@ export interface Movimento {
   foto_urls: string[];
   cliente_email: string | null;
   firma_url: string | null;
+  firma_autista_url: string | null;
   pdf_url: string | null;
   lat: number;
   lng: number;

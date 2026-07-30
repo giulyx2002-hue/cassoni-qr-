@@ -38,6 +38,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
   const [foto, setFoto] = useState<File[]>([]);
   const anteprimeFoto = useMemo(() => foto.map((file) => URL.createObjectURL(file)), [foto]);
   const firmaRef = useRef<FirmaCanvasHandle>(null);
+  const firmaAutistaRef = useRef<FirmaCanvasHandle>(null);
   const [salvataggio, setSalvataggio] = useState(false);
   const [messaggioSalvataggio, setMessaggioSalvataggio] = useState<string | null>(null);
   const [errore, setErrore] = useState<string | null>(null);
@@ -116,6 +117,10 @@ export function MovimentoForm({ codice }: { codice: string }) {
       setErrore("Inserisci l'email del cliente per la consegna.");
       return;
     }
+    if (isConsegna && (firmaAutistaRef.current?.isEmpty() ?? true)) {
+      setErrore("Firma come autista prima di registrare la consegna.");
+      return;
+    }
     if (isConsegna && (firmaRef.current?.isEmpty() ?? true)) {
       setErrore("Fai firmare il cliente prima di registrare la consegna.");
       return;
@@ -164,19 +169,21 @@ export function MovimentoForm({ codice }: { codice: string }) {
     }
 
     let firmaUrl: string | null = null;
+    let firmaAutistaUrl: string | null = null;
     let pdfUrl: string | null = null;
     const dataOra = new Date();
 
     if (isConsegna) {
       const firmaBlob = await firmaRef.current?.toBlob();
-      if (!firmaBlob) {
-        setErrore("Errore nella cattura della firma, riprova.");
+      const firmaAutistaBlob = await firmaAutistaRef.current?.toBlob();
+      if (!firmaBlob || !firmaAutistaBlob) {
+        setErrore("Errore nella cattura delle firme, riprova.");
         setSalvataggio(false);
         setMessaggioSalvataggio(null);
         return;
       }
 
-      setMessaggioSalvataggio("Salvataggio firma in corso...");
+      setMessaggioSalvataggio("Salvataggio firme in corso...");
       const percorsoFirma = `${cassone.id}/firma-${Date.now()}.png`;
       const { error: erroreFirma } = await supabase.storage
         .from("documenti-movimento")
@@ -200,6 +207,31 @@ export function MovimentoForm({ codice }: { codice: string }) {
       }
       firmaUrl = datiFirma.signedUrl;
 
+      const percorsoFirmaAutista = `${cassone.id}/firma-autista-${Date.now()}.png`;
+      const { error: erroreFirmaAutista } = await supabase.storage
+        .from("documenti-movimento")
+        .upload(percorsoFirmaAutista, firmaAutistaBlob, { contentType: "image/png" });
+
+      if (erroreFirmaAutista) {
+        setErrore(`Errore nel salvataggio della firma autista: ${erroreFirmaAutista.message}`);
+        setSalvataggio(false);
+        setMessaggioSalvataggio(null);
+        return;
+      }
+      const { data: datiFirmaAutista, error: erroreLinkFirmaAutista } = await supabase.storage
+        .from("documenti-movimento")
+        .createSignedUrl(percorsoFirmaAutista, SCADENZA_LINK_SECONDI);
+
+      if (erroreLinkFirmaAutista || !datiFirmaAutista) {
+        setErrore(
+          `Errore nella creazione del link firma autista: ${erroreLinkFirmaAutista?.message ?? "sconosciuto"}`
+        );
+        setSalvataggio(false);
+        setMessaggioSalvataggio(null);
+        return;
+      }
+      firmaAutistaUrl = datiFirmaAutista.signedUrl;
+
       setMessaggioSalvataggio("Generazione PDF in corso...");
       const pdfBlob = await generaPdfConsegna({
         codiceCassone: cassone.codice,
@@ -214,6 +246,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
         lng: posizione.lng,
         foto,
         firmaBlob,
+        firmaAutistaBlob,
         dataOra,
       });
 
@@ -254,6 +287,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
       note: note || null,
       foto_urls: fotoUrls,
       firma_url: firmaUrl,
+      firma_autista_url: firmaAutistaUrl,
       pdf_url: pdfUrl,
       lat: posizione.lat,
       lng: posizione.lng,
@@ -468,6 +502,25 @@ export function MovimentoForm({ codice }: { codice: string }) {
                 />
                 <p className="mt-1 text-xs text-gray-400">
                   Riceverà via email il PDF con lo stato del cassone e la firma.
+                </p>
+              </div>
+
+              <div>
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Firma autista
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => firmaAutistaRef.current?.clear()}
+                    className="text-xs text-gray-500 hover:text-gray-900"
+                  >
+                    Cancella
+                  </button>
+                </div>
+                <FirmaCanvas ref={firmaAutistaRef} />
+                <p className="mt-1 text-xs text-gray-400">
+                  Firma tu, come autista, per confermare la consegna.
                 </p>
               </div>
 

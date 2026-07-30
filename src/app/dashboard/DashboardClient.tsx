@@ -451,14 +451,26 @@ function MovimentoItem({
           ))}
         </div>
       )}
-      {(movimento.firma_url || movimento.pdf_url) && (
+      {(movimento.firma_url || movimento.firma_autista_url || movimento.pdf_url) && (
         <div className="mt-2 flex items-center gap-3 border-t border-gray-100 pt-2">
+          {movimento.firma_autista_url && (
+            <a href={movimento.firma_autista_url} target="_blank" rel="noreferrer" className="shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={movimento.firma_autista_url}
+                alt="Firma autista"
+                title="Firma autista"
+                className="h-12 w-24 rounded-lg border border-gray-200 bg-white object-contain"
+              />
+            </a>
+          )}
           {movimento.firma_url && (
             <a href={movimento.firma_url} target="_blank" rel="noreferrer" className="shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={movimento.firma_url}
                 alt="Firma cliente"
+                title="Firma cliente"
                 className="h-12 w-24 rounded-lg border border-gray-200 bg-white object-contain"
               />
             </a>

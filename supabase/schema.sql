@@ -37,6 +37,7 @@ create table movimenti (
   foto_urls text[] not null default '{}',
   cliente_email text,
   firma_url text,
+  firma_autista_url text,
   pdf_url text,
   lat double precision not null,
   lng double precision not null,

@@ -14,6 +14,7 @@ interface DatiConsegna {
   lng: number;
   foto: File[];
   firmaBlob: Blob;
+  firmaAutistaBlob: Blob;
   dataOra: Date;
 }
 
@@ -135,25 +136,35 @@ export async function generaPdfConsegna(dati: DatiConsegna): Promise<Blob> {
     y = 20;
   }
 
+  const boxFirma = 70;
+  const altezzaFirma = 25;
+  const gapFirme = 14;
+  const xFirmaAutista = marginX + boxFirma + gapFirme;
+
   doc.setFont("helvetica", "bold");
   doc.setTextColor(20, 20, 20);
-  doc.text("Firma cliente", marginX, y);
+  doc.text("Firma autista", marginX, y);
+  doc.text("Firma cliente", xFirmaAutista, y);
   y += 4;
 
-  const firmaDataUrl = await blobADataUrl(dati.firmaBlob);
-  doc.addImage(firmaDataUrl, "PNG", marginX, y, 70, 25);
+  const firmaAutistaDataUrl = await blobADataUrl(dati.firmaAutistaBlob);
+  doc.addImage(firmaAutistaDataUrl, "PNG", marginX, y, boxFirma, altezzaFirma);
   doc.setDrawColor(200);
-  doc.rect(marginX, y, 70, 25);
-  y += 30;
+  doc.rect(marginX, y, boxFirma, altezzaFirma);
+
+  const firmaDataUrl = await blobADataUrl(dati.firmaBlob);
+  doc.addImage(firmaDataUrl, "PNG", xFirmaAutista, y, boxFirma, altezzaFirma);
+  doc.rect(xFirmaAutista, y, boxFirma, altezzaFirma);
+
+  y += altezzaFirma + 5;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(120, 120, 120);
-  doc.text(
-    `Firmato digitalmente da ${dati.cliente || "cliente"} il ${dati.dataOra.toLocaleString("it-IT")}`,
-    marginX,
-    y
-  );
+  doc.text(dati.nomeAutista || "autista", marginX, y);
+  doc.text(dati.cliente || "cliente", xFirmaAutista, y);
+  y += 5;
+  doc.text(`Firmato digitalmente il ${dati.dataOra.toLocaleString("it-IT")}`, marginX, y);
 
   return doc.output("blob");
 }
