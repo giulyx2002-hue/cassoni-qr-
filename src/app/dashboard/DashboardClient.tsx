@@ -5,7 +5,8 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { Cassone, Movimento, TipoOperazione, UltimaPosizione } from "@/lib/types";
-import { TIPI_OPERAZIONE } from "@/lib/types";
+import { TIPI_OPERAZIONE, TIPOLOGIE_CASSA } from "@/lib/types";
+import { ComboBox } from "@/components/ComboBox";
 
 const Mappa = dynamic(() => import("./Mappa").then((m) => m.Mappa), {
   ssr: false,
@@ -278,12 +279,11 @@ function GestioneCassone({
 
       {modifica ? (
         <div className="mt-2 space-y-2">
-          <input
-            type="text"
-            placeholder="Dimensioni"
+          <ComboBox
+            label="Tipologia di cassa"
             value={dimensioni}
-            onChange={(e) => setDimensioni(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
+            onChange={setDimensioni}
+            opzioni={TIPOLOGIE_CASSA}
           />
           <textarea
             placeholder="Note"
@@ -392,11 +392,11 @@ function MovimentoItem({
               </option>
             ))}
           </select>
-          <input
+          <ComboBox
+            label="Tipologia di cassa"
             value={dimensioni}
-            onChange={(e) => setDimensioni(e.target.value)}
-            placeholder="Dimensioni"
-            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
+            onChange={setDimensioni}
+            opzioni={TIPOLOGIE_CASSA}
           />
           <textarea
             value={note}
@@ -443,7 +443,7 @@ function MovimentoItem({
       {movimento.cliente_email && <p>Email cliente: {movimento.cliente_email}</p>}
       <p>Targa: {movimento.targa}</p>
       <p>Autista: {movimento.nome_autista}</p>
-      {movimento.dimensioni && <p>Dimensioni: {movimento.dimensioni}</p>}
+      {movimento.dimensioni && <p>Tipologia di cassa: {movimento.dimensioni}</p>}
       {movimento.note && <p>Note: {movimento.note}</p>}
       <p className="text-gray-600">
         {movimento.lat.toFixed(5)}, {movimento.lng.toFixed(5)}

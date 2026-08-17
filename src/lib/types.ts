@@ -8,6 +8,24 @@ export const TIPI_OPERAZIONE: { value: TipoOperazione; label: string }[] = [
   { value: "spostamento", label: "Spostamento" },
 ];
 
+export const TIPOLOGIE_CASSA: string[] = [
+  "Compattatore BTE",
+  "Compattatore Carnovali",
+  "Compattatore Locatelli",
+  "Compattatore Sosmar",
+  "Cassone scarrabile da mc 5,00",
+  "Cassone scarrabile da mc 10,00",
+  "Cassone scarrabile da mc 15,00",
+  "Cassone scarrabile da mc 20,00",
+  "Cassa scarrabile mc 22,08",
+  "Cassone scarrabile da mc 25,00",
+  "Cassone scarrabile da mc 27,6",
+  "Cassone scarrabile da mc 30,00",
+  "Cassone scarrabile mc 33,00",
+  "Attrezzature grasso",
+  "Cassone scarrabile tetto idraulico 25 mc",
+];
+
 export interface Profile {
   id: string;
   nome: string;

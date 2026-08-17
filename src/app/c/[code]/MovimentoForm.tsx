@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { Cassone, TipoOperazione } from "@/lib/types";
-import { TIPI_OPERAZIONE } from "@/lib/types";
+import { TIPI_OPERAZIONE, TIPOLOGIE_CASSA } from "@/lib/types";
 import { SchermataCard } from "@/components/SchermataCard";
 import { Logo } from "@/components/Logo";
 import { FirmaCanvas, type FirmaCanvasHandle } from "@/components/FirmaCanvas";
@@ -462,15 +462,12 @@ export function MovimentoForm({ codice }: { codice: string }) {
             </select>
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Dimensioni</label>
-            <input
-              type="text"
-              value={dimensioni}
-              onChange={(e) => setDimensioni(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
-            />
-          </div>
+          <ComboBox
+            label="Tipologia di cassa"
+            value={dimensioni}
+            onChange={setDimensioni}
+            opzioni={TIPOLOGIE_CASSA}
+          />
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Note</label>

@@ -7,6 +7,8 @@ import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/client";
 import { generaCodice } from "@/lib/codice";
 import { SchermataCard } from "@/components/SchermataCard";
+import { ComboBox } from "@/components/ComboBox";
+import { TIPOLOGIE_CASSA } from "@/lib/types";
 
 interface CassoneCreato {
   codice: string;
@@ -132,18 +134,12 @@ export default function GeneraPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Dimensioni
-            </label>
-            <input
-              type="text"
-              placeholder="es. 3x2x1,5 m"
-              value={dimensioni}
-              onChange={(e) => setDimensioni(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
-            />
-          </div>
+          <ComboBox
+            label="Tipologia di cassa"
+            value={dimensioni}
+            onChange={setDimensioni}
+            opzioni={TIPOLOGIE_CASSA}
+          />
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">

@@ -78,7 +78,7 @@ export async function generaPdfConsegna(dati: DatiConsegna): Promise<Blob> {
     "Tipo operazione",
     TIPI_OPERAZIONE.find((t) => t.value === dati.tipoOperazione)?.label ?? dati.tipoOperazione
   );
-  riga("Dimensioni", dati.dimensioni || "-");
+  riga("Tipologia di cassa", dati.dimensioni || "-");
   riga("Posizione GPS", `${dati.lat.toFixed(5)}, ${dati.lng.toFixed(5)}`);
 
   if (dati.note) {
