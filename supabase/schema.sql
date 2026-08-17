@@ -23,6 +23,26 @@ create table cassoni (
 
 create index cassoni_codice_idx on cassoni (codice);
 
+-- Elenchi clienti/mezzi/autisti per l'autocompletamento nel form del
+-- movimento, alimentati dall'importazione Excel in dashboard (/dashboard/importa).
+create table clienti (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null unique,
+  created_at timestamptz not null default now()
+);
+
+create table mezzi (
+  id uuid primary key default gen_random_uuid(),
+  targa text not null unique,
+  created_at timestamptz not null default now()
+);
+
+create table autisti (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null unique,
+  created_at timestamptz not null default now()
+);
+
 -- Ogni scansione genera un movimento: posizione + dettagli in quel momento
 create table movimenti (
   id uuid primary key default gen_random_uuid(),
@@ -83,6 +103,9 @@ $$;
 -- cassoni e movimenti. Solo un admin può modificare/eliminare e vedere tutti i profili.
 alter table profiles enable row level security;
 alter table cassoni enable row level security;
+alter table clienti enable row level security;
+alter table mezzi enable row level security;
+alter table autisti enable row level security;
 alter table movimenti enable row level security;
 
 create policy "utenti autenticati leggono i profili"
@@ -112,6 +135,51 @@ create policy "admin aggiorna i cassoni"
 
 create policy "admin elimina i cassoni"
   on cassoni for delete
+  to authenticated
+  using (public.is_admin());
+
+create policy "utenti autenticati leggono i clienti"
+  on clienti for select
+  to authenticated
+  using (true);
+
+create policy "utenti autenticati aggiungono clienti"
+  on clienti for insert
+  to authenticated
+  with check (true);
+
+create policy "admin elimina clienti"
+  on clienti for delete
+  to authenticated
+  using (public.is_admin());
+
+create policy "utenti autenticati leggono i mezzi"
+  on mezzi for select
+  to authenticated
+  using (true);
+
+create policy "utenti autenticati aggiungono mezzi"
+  on mezzi for insert
+  to authenticated
+  with check (true);
+
+create policy "admin elimina mezzi"
+  on mezzi for delete
+  to authenticated
+  using (public.is_admin());
+
+create policy "utenti autenticati leggono gli autisti"
+  on autisti for select
+  to authenticated
+  using (true);
+
+create policy "utenti autenticati aggiungono autisti"
+  on autisti for insert
+  to authenticated
+  with check (true);
+
+create policy "admin elimina autisti"
+  on autisti for delete
   to authenticated
   using (public.is_admin());
 

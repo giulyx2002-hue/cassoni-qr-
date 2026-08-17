@@ -39,6 +39,16 @@ La 005 rende privati i bucket delle foto/firme/PDF (prima erano pubblici): i
 movimenti creati prima di questa migrazione avranno link foto/firma/PDF non
 più funzionanti, quelli creati dopo useranno link firmati e protetti.
 
+Se il progetto esisteva già da prima della firma autista, esegui anche
+[`supabase/migrations/006_firma_autista.sql`](supabase/migrations/006_firma_autista.sql).
+
+Se il progetto esisteva già da prima dell'elenco clienti, esegui anche
+[`supabase/migrations/007_clienti.sql`](supabase/migrations/007_clienti.sql).
+
+Se il progetto esisteva già da prima degli elenchi mezzi/autisti, esegui anche
+[`supabase/migrations/008_mezzi_autisti.sql`](supabase/migrations/008_mezzi_autisti.sql)
+(vedi sezione "Importazione da Excel" più sotto).
+
 ## 2. Crea un account Resend (per l'invio email)
 
 1. Vai su [resend.com](https://resend.com) e crea un account gratuito (3.000 email/mese incluse).
@@ -109,6 +119,35 @@ all'app aziendale). Gli utenti si creano da Supabase:
   aggiornamento in tempo reale quando un dipendente scansiona. L'admin può
   modificare o eliminare sia i singoli movimenti sia un cassone intero (con
   tutto il suo storico).
+
+## Importazione da Excel
+
+I campi "Cliente", "Targa camion" e "Nome autista" nel form del movimento
+suggeriscono valori già noti (autocompletamento), letti dalle tabelle `clienti`,
+`mezzi` e `autisti` su Supabase.
+
+Queste tabelle si aggiornano da **Dashboard → "Importa clienti/mezzi/autisti da
+Excel"** (solo admin), caricando due file esportati dal gestionale aziendale:
+- un file tipo `public_bsimp.xlsx` (anagrafica imprese/clienti, colonna `imp_ragsoc`)
+- un file tipo `public_bsform.xlsx` (incarichi/FIR, colonne targa `mez_targa*` e
+  autista `form_autista*`)
+
+L'importazione si può ripetere quando si vuole: i valori già presenti non vengono
+duplicati. Non serve nessuno script o programma da installare — tutto avviene dal
+browser al momento del caricamento del file.
+
+Nota: nel database Access di partenza non erano presenti indirizzi email dei
+clienti, quindi l'email va sempre inserita a mano durante la consegna.
+
+### Alternativa: sincronizzazione automatica da Access (avanzata)
+
+Esiste anche uno script PowerShell (`sincronizza-clienti.ps1` + `.bat`, condiviso
+in chat) che legge direttamente il database Access e sincronizza i clienti senza
+bisogno di esportare manualmente un Excel — utile se si vuole automatizzare
+l'aggiornamento (es. con l'Utilità di pianificazione di Windows). Richiede però che
+un PC resti acceso e connesso per sincronizzare, e usa la **service role key** di
+Supabase (molto potente, da non condividere mai). Per la maggior parte dei casi,
+l'importazione Excel dalla dashboard è più semplice e sufficiente.
 
 ## Installare l'app sul telefono (PWA)
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { Cassone, Movimento, TipoOperazione, UltimaPosizione } from "@/lib/types";
 import { TIPI_OPERAZIONE } from "@/lib/types";
@@ -161,6 +162,12 @@ export function DashboardClient({
             onChange={(e) => setFiltro(e.target.value)}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
           />
+          <Link
+            href="/dashboard/importa"
+            className="mt-2 inline-block text-sm text-brand-green-dark hover:text-brand-green-dark/80"
+          >
+            Importa clienti/mezzi/autisti da Excel →
+          </Link>
         </div>
 
         {selezionato && cassoneSelezionato ? (

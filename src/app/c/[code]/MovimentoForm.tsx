@@ -25,6 +25,34 @@ type StatoFinale =
 // non viene condiviso fuori dai canali previsti (email al cliente, dashboard).
 const SCADENZA_LINK_SECONDI = 10 * 365 * 24 * 60 * 60;
 
+// Supabase limita ogni richiesta a un numero massimo di righe (di solito 1000),
+// indipendentemente dal .limit() richiesto: per elenchi più lunghi serve paginare.
+async function recuperaTuttiValori(
+  supabase: ReturnType<typeof createClient>,
+  tabella: "clienti" | "mezzi" | "autisti",
+  colonna: "nome" | "targa"
+): Promise<string[]> {
+  const valori: string[] = [];
+  const dimensionePagina = 1000;
+  let pagina = 0;
+
+  while (true) {
+    const { data } = await supabase
+      .from(tabella)
+      .select(colonna)
+      .order(colonna)
+      .range(pagina * dimensionePagina, pagina * dimensionePagina + dimensionePagina - 1);
+
+    const righe = (data ?? []) as Record<string, string>[];
+    valori.push(...righe.map((r) => r[colonna]));
+
+    if (righe.length < dimensionePagina) break;
+    pagina += 1;
+  }
+
+  return valori;
+}
+
 export function MovimentoForm({ codice }: { codice: string }) {
   const [cassone, setCassone] = useState<Cassone | null | undefined>(undefined);
   const [posizione, setPosizione] = useState<StatoPosizione>({ fase: "in-corso" });
@@ -43,6 +71,9 @@ export function MovimentoForm({ codice }: { codice: string }) {
   const [messaggioSalvataggio, setMessaggioSalvataggio] = useState<string | null>(null);
   const [errore, setErrore] = useState<string | null>(null);
   const [salvato, setSalvato] = useState<StatoFinale | null>(null);
+  const [nomiClienti, setNomiClienti] = useState<string[]>([]);
+  const [targheMezzi, setTargheMezzi] = useState<string[]>([]);
+  const [nomiAutisti, setNomiAutisti] = useState<string[]>([]);
 
   const isConsegna = tipoOperazione === "consegna";
 
@@ -58,6 +89,13 @@ export function MovimentoForm({ codice }: { codice: string }) {
         if (data?.dimensioni) setDimensioni(data.dimensioni);
       });
   }, [codice]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    recuperaTuttiValori(supabase, "clienti", "nome").then(setNomiClienti);
+    recuperaTuttiValori(supabase, "mezzi", "targa").then(setTargheMezzi);
+    recuperaTuttiValori(supabase, "autisti", "nome").then(setNomiAutisti);
+  }, []);
 
   useEffect(() => {
     return () => anteprimeFoto.forEach((u) => URL.revokeObjectURL(u));
@@ -382,10 +420,17 @@ export function MovimentoForm({ codice }: { codice: string }) {
             <label className="mb-1 block text-sm font-medium text-gray-700">Cliente</label>
             <input
               type="text"
+              list="elenco-clienti"
               value={cliente}
               onChange={(e) => setCliente(e.target.value)}
+              placeholder="Inizia a digitare per cercare..."
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
             />
+            <datalist id="elenco-clienti">
+              {nomiClienti.map((nome) => (
+                <option key={nome} value={nome} />
+              ))}
+            </datalist>
           </div>
 
           <div>
@@ -394,11 +439,17 @@ export function MovimentoForm({ codice }: { codice: string }) {
             </label>
             <input
               type="text"
+              list="elenco-targhe"
               required
               value={targa}
               onChange={(e) => setTarga(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
             />
+            <datalist id="elenco-targhe">
+              {targheMezzi.map((t) => (
+                <option key={t} value={t} />
+              ))}
+            </datalist>
           </div>
 
           <div>
@@ -407,11 +458,17 @@ export function MovimentoForm({ codice }: { codice: string }) {
             </label>
             <input
               type="text"
+              list="elenco-autisti"
               required
               value={nomeAutista}
               onChange={(e) => setNomeAutista(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
             />
+            <datalist id="elenco-autisti">
+              {nomiAutisti.map((n) => (
+                <option key={n} value={n} />
+              ))}
+            </datalist>
           </div>
 
           <div>
