@@ -66,7 +66,7 @@ export default async function HomePage() {
               </span>
               <span>
                 <p className="font-medium text-gray-900">{voce.titolo}</p>
-                <p className="mt-0.5 text-sm text-gray-500">{voce.descrizione}</p>
+                <p className="mt-0.5 text-sm text-gray-700">{voce.descrizione}</p>
               </span>
             </Link>
           ))}

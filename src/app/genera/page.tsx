@@ -92,9 +92,9 @@ export default function GeneraPage() {
             {creato.codice}
           </p>
           {creato.dimensioni && (
-            <p className="text-sm text-gray-500">{creato.dimensioni}</p>
+            <p className="text-sm text-gray-700">{creato.dimensioni}</p>
           )}
-          {creato.note && <p className="text-sm text-gray-500">{creato.note}</p>}
+          {creato.note && <p className="text-sm text-gray-700">{creato.note}</p>}
 
           <div className="mt-6 flex gap-3 print:hidden">
             <button
@@ -112,7 +112,7 @@ export default function GeneraPage() {
           </div>
           <Link
             href="/"
-            className="mt-4 block text-sm text-gray-500 hover:text-gray-900 print:hidden"
+            className="mt-4 block text-sm text-gray-700 hover:text-gray-900 print:hidden"
           >
             Torna alla home
           </Link>
@@ -127,7 +127,7 @@ export default function GeneraPage() {
         <h1 className="mb-1 text-lg font-semibold text-gray-900">
           Genera nuovo cassone
         </h1>
-        <p className="mb-6 text-sm text-gray-500">
+        <p className="mb-6 text-sm text-gray-700">
           Crea un QR univoco da stampare sul cassone
         </p>
 
@@ -174,7 +174,7 @@ export default function GeneraPage() {
 
         <Link
           href="/"
-          className="mt-4 block text-center text-sm text-gray-500 hover:text-gray-900"
+          className="mt-4 block text-center text-sm text-gray-700 hover:text-gray-900"
         >
           Annulla
         </Link>

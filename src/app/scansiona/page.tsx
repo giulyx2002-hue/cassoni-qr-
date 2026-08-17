@@ -63,7 +63,7 @@ export default function ScansionaPage() {
         <h1 className="mb-1 text-lg font-semibold text-gray-900">
           Scansiona cassone
         </h1>
-        <p className="mb-4 text-sm text-gray-500">
+        <p className="mb-4 text-sm text-gray-700">
           Inquadra il QR stampato sul cassone
         </p>
 
@@ -76,14 +76,14 @@ export default function ScansionaPage() {
         <div id={REGION_ID} className="overflow-hidden rounded-lg bg-black" />
 
         {!avviato && !errore && (
-          <p className="mt-4 text-center text-sm text-gray-500">
+          <p className="mt-4 text-center text-sm text-gray-700">
             Avvio fotocamera...
           </p>
         )}
 
         <Link
           href="/"
-          className="mt-4 block text-center text-sm text-gray-500 hover:text-gray-900"
+          className="mt-4 block text-center text-sm text-gray-700 hover:text-gray-900"
         >
           Annulla
         </Link>

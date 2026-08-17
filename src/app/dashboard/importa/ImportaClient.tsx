@@ -136,12 +136,12 @@ export function ImportaClient() {
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8">
-      <Link href="/dashboard" className="mb-6 inline-block text-sm text-gray-500 hover:text-gray-900">
+      <Link href="/dashboard" className="mb-6 inline-block text-sm text-gray-700 hover:text-gray-900">
         ← Torna alla dashboard
       </Link>
 
       <h1 className="mb-1 text-lg font-semibold text-gray-900">Importa dati dal gestionale</h1>
-      <p className="mb-6 text-sm text-gray-500">
+      <p className="mb-6 text-sm text-gray-700">
         Carica i file Excel esportati dal gestionale per aggiornare gli elenchi usati per
         l&apos;autocompletamento nel form del movimento. Puoi ripetere l&apos;importazione quando vuoi:
         i nomi già presenti non vengono duplicati.
@@ -179,7 +179,7 @@ function RiquadroImport({
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
       <h2 className="font-medium text-gray-900">{titolo}</h2>
-      <p className="mt-1 text-sm text-gray-500">{descrizione}</p>
+      <p className="mt-1 text-sm text-gray-700">{descrizione}</p>
 
       <input
         type="file"
@@ -194,7 +194,7 @@ function RiquadroImport({
       />
 
       {esito.fase === "in-corso" && (
-        <p className="mt-2 text-sm text-gray-500">Importazione in corso...</p>
+        <p className="mt-2 text-sm text-gray-700">Importazione in corso...</p>
       )}
       {esito.fase === "ok" && (
         <p className="mt-2 rounded-lg bg-brand-green-light px-3 py-2 text-sm text-brand-green-dark">

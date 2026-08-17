@@ -10,7 +10,7 @@ import { TIPI_OPERAZIONE } from "@/lib/types";
 const Mappa = dynamic(() => import("./Mappa").then((m) => m.Mappa), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full w-full items-center justify-center text-sm text-gray-400">
+    <div className="flex h-full w-full items-center justify-center text-sm text-gray-600">
       Caricamento mappa...
     </div>
   ),
@@ -174,7 +174,7 @@ export function DashboardClient({
           <div className="flex-1 overflow-y-auto p-3">
             <button
               onClick={() => setSelezionato(null)}
-              className="mb-3 text-sm text-gray-500 hover:text-gray-900"
+              className="mb-3 text-sm text-gray-700 hover:text-gray-900"
             >
               ← Torna all&apos;elenco
             </button>
@@ -197,7 +197,7 @@ export function DashboardClient({
                 />
               ))}
               {storico.length === 0 && (
-                <p className="text-sm text-gray-400">Nessun movimento.</p>
+                <p className="text-sm text-gray-600">Nessun movimento.</p>
               )}
             </ul>
           </div>
@@ -214,23 +214,23 @@ export function DashboardClient({
                     <p className="font-medium text-gray-900">{c.codice}</p>
                     {pos ? (
                       <>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-700">
                           {pos.cliente || "Nessun cliente"} · {labelOperazione(pos.tipo_operazione)}
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-gray-600">
                           {new Date(pos.ultimo_movimento).toLocaleString("it-IT")} ·{" "}
                           {pos.ultimo_dipendente}
                         </p>
                       </>
                     ) : (
-                      <p className="text-sm text-gray-400">Nessun movimento registrato</p>
+                      <p className="text-sm text-gray-600">Nessun movimento registrato</p>
                     )}
                   </button>
                 </li>
               );
             })}
             {cassoniFiltrati.length === 0 && (
-              <p className="p-4 text-sm text-gray-400">Nessun cassone trovato.</p>
+              <p className="p-4 text-sm text-gray-600">Nessun cassone trovato.</p>
             )}
           </ul>
         )}
@@ -309,7 +309,7 @@ function GestioneCassone({
           </div>
         </div>
       ) : (
-        <div className="mt-1 text-sm text-gray-500">
+        <div className="mt-1 text-sm text-gray-700">
           {cassone.dimensioni && <p>{cassone.dimensioni}</p>}
           {cassone.note && <p>{cassone.note}</p>}
         </div>
@@ -428,7 +428,7 @@ function MovimentoItem({
   return (
     <li className="rounded-lg border border-gray-200 p-3 text-sm">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-gray-500">{new Date(movimento.created_at).toLocaleString("it-IT")}</p>
+        <p className="text-gray-700">{new Date(movimento.created_at).toLocaleString("it-IT")}</p>
         <div className="flex shrink-0 gap-2">
           <button onClick={() => setModifica(true)} className="text-brand-green-dark hover:text-brand-green-dark/80">
             Modifica
@@ -445,7 +445,7 @@ function MovimentoItem({
       <p>Autista: {movimento.nome_autista}</p>
       {movimento.dimensioni && <p>Dimensioni: {movimento.dimensioni}</p>}
       {movimento.note && <p>Note: {movimento.note}</p>}
-      <p className="text-gray-400">
+      <p className="text-gray-600">
         {movimento.lat.toFixed(5)}, {movimento.lng.toFixed(5)}
       </p>
       {movimento.foto_urls.length > 0 && (

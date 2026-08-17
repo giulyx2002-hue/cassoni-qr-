@@ -16,7 +16,7 @@ export function LogoutButton() {
   return (
     <button
       onClick={handleLogout}
-      className="rounded-lg px-3 py-1.5 text-sm text-gray-500 transition-colors hover:bg-brand-orange-light hover:text-brand-orange-dark"
+      className="rounded-lg px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-brand-orange-light hover:text-brand-orange-dark"
     >
       Esci
     </button>

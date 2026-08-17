@@ -8,6 +8,7 @@ import { TIPI_OPERAZIONE } from "@/lib/types";
 import { SchermataCard } from "@/components/SchermataCard";
 import { Logo } from "@/components/Logo";
 import { FirmaCanvas, type FirmaCanvasHandle } from "@/components/FirmaCanvas";
+import { ComboBox } from "@/components/ComboBox";
 import { generaPdfConsegna } from "@/lib/pdfConsegna";
 
 type StatoPosizione =
@@ -371,7 +372,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
     return (
       <CentroMessaggio>
         <p className="text-brand-orange-dark">Nessun cassone trovato con codice {codice}.</p>
-        <Link href="/scansiona" className="mt-4 inline-block text-sm text-gray-500 hover:text-gray-900">
+        <Link href="/scansiona" className="mt-4 inline-block text-sm text-gray-700 hover:text-gray-900">
           Riprova la scansione
         </Link>
       </CentroMessaggio>
@@ -387,7 +388,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
           </svg>
         </span>
         <p className="text-lg font-semibold text-gray-900">Movimento registrato</p>
-        <p className="mt-1 text-sm text-gray-500">Cassone {cassone.codice}</p>
+        <p className="mt-1 text-sm text-gray-700">Cassone {cassone.codice}</p>
         {salvato.fase === "salvato-email-ok" && (
           <p className="mt-3 rounded-lg bg-brand-green-light px-3 py-2 text-sm text-brand-green-dark">
             PDF inviato a {salvato.email}
@@ -399,7 +400,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
             resta disponibile in dashboard.
           </p>
         )}
-        <Link href="/" className="mt-4 inline-block text-sm text-gray-500 hover:text-gray-900">
+        <Link href="/" className="mt-4 inline-block text-sm text-gray-700 hover:text-gray-900">
           Torna alla home
         </Link>
       </CentroMessaggio>
@@ -416,60 +417,29 @@ export function MovimentoForm({ codice }: { codice: string }) {
         <PosizioneStato posizione={posizione} onRiprova={richiediPosizione} />
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Cliente</label>
-            <input
-              type="text"
-              list="elenco-clienti"
-              value={cliente}
-              onChange={(e) => setCliente(e.target.value)}
-              placeholder="Inizia a digitare per cercare..."
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
-            />
-            <datalist id="elenco-clienti">
-              {nomiClienti.map((nome) => (
-                <option key={nome} value={nome} />
-              ))}
-            </datalist>
-          </div>
+          <ComboBox
+            label="Cliente"
+            value={cliente}
+            onChange={setCliente}
+            opzioni={nomiClienti}
+            placeholder="Scegli o digita per cercare..."
+          />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Targa camion
-            </label>
-            <input
-              type="text"
-              list="elenco-targhe"
-              required
-              value={targa}
-              onChange={(e) => setTarga(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
-            />
-            <datalist id="elenco-targhe">
-              {targheMezzi.map((t) => (
-                <option key={t} value={t} />
-              ))}
-            </datalist>
-          </div>
+          <ComboBox
+            label="Targa camion"
+            value={targa}
+            onChange={setTarga}
+            opzioni={targheMezzi}
+            required
+          />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
-              Nome autista
-            </label>
-            <input
-              type="text"
-              list="elenco-autisti"
-              required
-              value={nomeAutista}
-              onChange={(e) => setNomeAutista(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
-            />
-            <datalist id="elenco-autisti">
-              {nomiAutisti.map((n) => (
-                <option key={n} value={n} />
-              ))}
-            </datalist>
-          </div>
+          <ComboBox
+            label="Nome autista"
+            value={nomeAutista}
+            onChange={setNomeAutista}
+            opzioni={nomiAutisti}
+            required
+          />
 
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -557,7 +527,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
                   placeholder="cliente@esempio.it"
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/30"
                 />
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-gray-600">
                   Riceverà via email il PDF con lo stato del cassone e la firma.
                 </p>
               </div>
@@ -570,13 +540,13 @@ export function MovimentoForm({ codice }: { codice: string }) {
                   <button
                     type="button"
                     onClick={() => firmaAutistaRef.current?.clear()}
-                    className="text-xs text-gray-500 hover:text-gray-900"
+                    className="text-xs text-gray-700 hover:text-gray-900"
                   >
                     Cancella
                   </button>
                 </div>
                 <FirmaCanvas ref={firmaAutistaRef} />
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-gray-600">
                   Firma tu, come autista, per confermare la consegna.
                 </p>
               </div>
@@ -589,13 +559,13 @@ export function MovimentoForm({ codice }: { codice: string }) {
                   <button
                     type="button"
                     onClick={() => firmaRef.current?.clear()}
-                    className="text-xs text-gray-500 hover:text-gray-900"
+                    className="text-xs text-gray-700 hover:text-gray-900"
                   >
                     Cancella
                   </button>
                 </div>
                 <FirmaCanvas ref={firmaRef} />
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-gray-600">
                   Fai firmare il cliente col dito o con il mouse nel riquadro qui sopra.
                 </p>
               </div>
@@ -617,7 +587,7 @@ export function MovimentoForm({ codice }: { codice: string }) {
           </button>
         </form>
 
-        <Link href="/" className="mt-4 block text-center text-sm text-gray-500 hover:text-gray-900">
+        <Link href="/" className="mt-4 block text-center text-sm text-gray-700 hover:text-gray-900">
           Annulla
         </Link>
       </div>
@@ -633,7 +603,7 @@ function PosizioneStato({
   onRiprova: () => void;
 }) {
   if (posizione.fase === "in-corso") {
-    return <p className="text-sm text-gray-500">Rilevamento posizione in corso...</p>;
+    return <p className="text-sm text-gray-700">Rilevamento posizione in corso...</p>;
   }
   if (posizione.fase === "errore") {
     return (

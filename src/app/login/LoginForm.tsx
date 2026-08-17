@@ -38,7 +38,7 @@ export function LoginForm() {
         <Logo className="h-12" />
       </div>
       <h1 className="mb-1 text-lg font-semibold text-gray-900">Tracciamento Cassoni</h1>
-      <p className="mb-6 text-sm text-gray-500">Accedi con le tue credenziali</p>
+      <p className="mb-6 text-sm text-gray-700">Accedi con le tue credenziali</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

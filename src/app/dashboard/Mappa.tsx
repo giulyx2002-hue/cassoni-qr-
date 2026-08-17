@@ -45,7 +45,7 @@ export function Mappa({
               <p className="font-semibold">{p.codice}</p>
               {p.cliente && <p>Cliente: {p.cliente}</p>}
               <p>{labelOperazione(p.tipo_operazione)} · targa {p.targa}</p>
-              <p className="text-gray-500">
+              <p className="text-gray-700">
                 {new Date(p.ultimo_movimento).toLocaleString("it-IT")}
               </p>
             </div>
