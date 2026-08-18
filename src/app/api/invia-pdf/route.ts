@@ -40,10 +40,12 @@ export async function POST(request: Request) {
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY);
+  const mittente = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
   const { error } = await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+    from: mittente,
     to: email,
+    bcc: process.env.RESEND_BCC_EMAIL || undefined,
     subject: `Conferma consegna cassone ${escapeHtml(String(codice))}`,
     html: `
       <p>Gentile ${escapeHtml(String(cliente || "cliente"))},</p>

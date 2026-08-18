@@ -75,6 +75,9 @@ E compila:
 - `RESEND_FROM_EMAIL`: l'indirizzo mittente verificato (passo 2.4). Finché non
   verifichi un dominio, puoi lasciarlo vuoto: verrà usato `onboarding@resend.dev`,
   utilizzabile solo per test verso la tua stessa email Resend.
+- `RESEND_BCC_EMAIL` (opzionale): indirizzo che riceve una copia nascosta (CCN)
+  di ogni email di consegna inviata ai clienti, così resta uno storico in
+  un'unica casella aziendale. Lascia vuoto per non inviare nessuna copia.
 
 ## 4. Installa e avvia
 
