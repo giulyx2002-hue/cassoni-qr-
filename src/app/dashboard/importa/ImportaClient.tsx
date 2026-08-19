@@ -54,11 +54,13 @@ function pulisci(valore: unknown): string {
 }
 
 function clientiConSedi(righe: Record<string, unknown>[]): string[] {
-  const insieme = new Set<string>();
+  const aziende = new Map<string, { ragsoc: string; sedi: Set<string> }>();
+
   for (const riga of righe) {
     if (pulisci(riga["imp_att"]) === "#Nome?") continue;
     const ragsoc = pulisci(riga["imp_ragsoc"]);
     if (!ragsoc) continue;
+    const codice = pulisci(riga["imp_cod"]) || ragsoc;
 
     const indirizzo = [pulisci(riga["imp_indir"]), pulisci(riga["imp_civ"])]
       .filter(Boolean)
@@ -67,9 +69,19 @@ function clientiConSedi(righe: Record<string, unknown>[]): string[] {
     const citta = [pulisci(riga["imp_citta"]), prov ? `(${prov})` : ""].filter(Boolean).join(" ");
     const sede = [indirizzo, citta].filter(Boolean).join(", ");
 
-    insieme.add(sede ? `${ragsoc} - ${sede}` : ragsoc);
+    if (!aziende.has(codice)) aziende.set(codice, { ragsoc, sedi: new Set() });
+    if (sede) aziende.get(codice)!.sedi.add(sede);
   }
-  return [...insieme];
+
+  const risultato = new Set<string>();
+  for (const { ragsoc, sedi } of aziende.values()) {
+    if (sedi.size <= 1) {
+      risultato.add(ragsoc);
+    } else {
+      for (const sede of sedi) risultato.add(`${ragsoc} - ${sede}`);
+    }
+  }
+  return [...risultato];
 }
 
 function messaggioErrore(err: unknown): string {

@@ -101,14 +101,14 @@ export function ComboBox({
       </div>
 
       {aperto && risultati.length > 0 && (
-        <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+        <ul className="absolute z-20 mt-1 max-h-80 w-full min-w-full overflow-x-hidden overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
           {risultati.map((opzione, i) => (
             <li key={opzione}>
               <button
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => scegli(opzione)}
-                className={`block w-full truncate px-3 py-2 text-left text-sm ${
+                className={`block w-full whitespace-normal break-words px-3 py-2.5 text-left text-sm leading-snug ${
                   i === evidenziato ? "bg-brand-green-light text-brand-green-dark" : "text-gray-900"
                 } hover:bg-brand-green-light hover:text-brand-green-dark`}
               >
