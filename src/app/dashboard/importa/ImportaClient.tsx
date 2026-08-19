@@ -47,6 +47,31 @@ function valoriDistinti(righe: Record<string, unknown>[], colonne: string[]): st
   return [...insieme];
 }
 
+function pulisci(valore: unknown): string {
+  if (typeof valore === "string") return valore.trim();
+  if (typeof valore === "number") return String(valore);
+  return "";
+}
+
+function clientiConSedi(righe: Record<string, unknown>[]): string[] {
+  const insieme = new Set<string>();
+  for (const riga of righe) {
+    if (pulisci(riga["imp_att"]) === "#Nome?") continue;
+    const ragsoc = pulisci(riga["imp_ragsoc"]);
+    if (!ragsoc) continue;
+
+    const indirizzo = [pulisci(riga["imp_indir"]), pulisci(riga["imp_civ"])]
+      .filter(Boolean)
+      .join(" ");
+    const prov = pulisci(riga["imp_prov"]);
+    const citta = [pulisci(riga["imp_citta"]), prov ? `(${prov})` : ""].filter(Boolean).join(" ");
+    const sede = [indirizzo, citta].filter(Boolean).join(", ");
+
+    insieme.add(sede ? `${ragsoc} - ${sede}` : ragsoc);
+  }
+  return [...insieme];
+}
+
 function messaggioErrore(err: unknown): string {
   console.error(err);
   if (err instanceof Error) return err.message;
@@ -86,16 +111,16 @@ export function ImportaClient() {
     setEsitoClienti({ fase: "in-corso" });
     try {
       const righe = await leggiFoglio(file);
-      const nomi = valoriDistinti(righe, ["imp_ragsoc"]);
-      if (nomi.length === 0) {
+      if (righe.length === 0 || !("imp_ragsoc" in righe[0])) {
         setEsitoClienti({
           fase: "errore",
           messaggio: "Nessuna colonna 'imp_ragsoc' trovata nel file. Controlla che sia il file giusto.",
         });
         return;
       }
+      const nomi = clientiConSedi(righe);
       await sincronizza("clienti", "nome", nomi);
-      setEsitoClienti({ fase: "ok", messaggio: `${nomi.length} clienti trovati e sincronizzati.` });
+      setEsitoClienti({ fase: "ok", messaggio: `${nomi.length} sedi cliente trovate e sincronizzate.` });
     } catch (err) {
       setEsitoClienti({
         fase: "errore",
@@ -150,7 +175,7 @@ export function ImportaClient() {
       <div className="space-y-4">
         <RiquadroImport
           titolo="Elenco clienti"
-          descrizione="File tipo public_bsimp.xlsx — legge la colonna 'imp_ragsoc'."
+          descrizione="File tipo public_bsimp.xlsx — legge ogni sede di ogni azienda (nome + indirizzo), non solo la ragione sociale."
           esito={esitoClienti}
           onFile={importaClienti}
         />
